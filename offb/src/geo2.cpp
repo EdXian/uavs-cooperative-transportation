@@ -128,6 +128,7 @@ void link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
 }
 
 geometry_msgs::WrenchStamped wrench1;
+geometry_msgs::Point est_force;
 
 geometry_msgs::WrenchStamped wrench2;
 
@@ -137,15 +138,17 @@ void force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
     wrench << msg->wrench.force.x ,  msg->wrench.force.y , msg->wrench.force.z;
        data     = payload_link1_Rotation* wrench;
 
-    wrench2.wrench.force.x= data(0);
-    wrench2.wrench.force.y= data(1);
-    wrench2.wrench.force.z= data(2);
+//    wrench2.wrench.force.x= data(0);
+//    wrench2.wrench.force.y= data(1);
+//    wrench2.wrench.force.z= data(2);
 
-//       wrench2.wrench.force.x = msg->wrench.force.x;
-//       wrench2.wrench.force.y = msg->wrench.force.y;
-//       wrench2.wrench.force.z = msg->wrench.force.z;
+    wrench2.wrench.force.x= -1.0*est_force.x;
+    wrench2.wrench.force.y= -1.0*est_force.y;
+    //use
+//    std::cout <<"====f====="<<std::endl;
+//    std::cout <<    est_force.x  <<"  "<<est_force.y   <<std::endl;
 
-        std::cout << "frame : " << msg->header.frame_id.c_str() << std::endl;
+    //    std::cout << "frame : " << msg->header.frame_id.c_str() << std::endl;
 }
 void force1_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
 
@@ -161,7 +164,6 @@ void force1_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
        wrench1.wrench.force.z = msg->wrench.force.z;
 
 }
-geometry_msgs::Point est_force;
 //mav_msgs::Actuators ;
 void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     est_force = *msg;
@@ -178,8 +180,8 @@ int main(int argc, char **argv)
   ros::Subscriber model_sub20 = nh.subscribe<gazebo_msgs::ModelStates>
            ("/gazebo/model_states", 5, model_cb);
 
-   ros::Subscriber force2_sub = nh.subscribe<geometry_msgs::WrenchStamped>
-           ("/ft_sensor2_topic", 3, force2_cb);
+//   ros::Subscriber force2_sub = nh.subscribe<geometry_msgs::WrenchStamped>
+//           ("/ft_sensor2_topic", 3, force2_cb);
    ros::Subscriber force1_sub = nh.subscribe<geometry_msgs::WrenchStamped>
            ("/ft_sensor1_topic", 3, force1_cb);
 
@@ -217,11 +219,11 @@ int main(int argc, char **argv)
            Eigen::Vector3d fs;
            flx = wrench1.wrench.force.x;
            fly = wrench1.wrench.force.y;
-           ffx = wrench2.wrench.force.x;
-           ffy = wrench2.wrench.force.y;
+           ffx = -1.0*est_force.x;
+           ffy = -1.0*est_force.y;
 
 
-           double ft = sqrt( flx*flx + fly*fly );
+           double ft = sqrt( ffx * ffx + ffy *ffy );
 
            if((ft>0.3)){
                triggered = true;

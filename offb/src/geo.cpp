@@ -203,8 +203,7 @@ Eigen::Vector3d nonholonomic_output(double x_r, double y_r,double theta_r,double
     double yaw = payload_yaw;//+(PI/2);
     err_state << x_r - p_c2(0) , y_r - p_c2(1) , theta_r - (yaw);
     Eigen::Matrix3d R_I_B;
-    std::cout <<"====pv====="<<std::endl;
-    std::cout <<    err_state.transpose()     <<std::endl;
+
     theta_e = theta_r- (yaw);
     err_state(2) = theta_e;
 
@@ -241,17 +240,13 @@ void force2_cb(const geometry_msgs::WrenchStamped::ConstPtr &msg){
     wrench << msg->wrench.force.x ,  msg->wrench.force.y , msg->wrench.force.z;
        data             =payload_Rotation*wrench;
 
-   // T_F <<est_force.x,est_force.y,0  ;// data(0),data(1),data(2);
-    T_F <<data(0),data(1),data(2)  ;// data(0),data(1),data(2);
-  //  T_F <<  msg->wrench.force.x , msg->wrench.force.y , 0;
-
-
-
+    //T_F <<-1.0*est_force.x,-1.0*est_force.y,0  ;// data(0),data(1),data(2);
+    T_F <<data(0),data(1),0  ;// data(0),data(1),data(2);
+    //  T_F <<  msg->wrench.force.x , msg->wrench.force.y , 0;
 
     wrench2.wrench.force.x= data(0);
     wrench2.wrench.force.y= data(1);
     wrench2.wrench.force.z= data(2);
-
 
 }
 void force1_cb(const geometry_msgs::WrenchStamped::ConstPtr &msg){
@@ -488,8 +483,8 @@ int main(int argc, char **argv)
         vp_dot_des(1) =  cmd_(1);// + omegad_dot;
         vp_dot_des(2) = 3*(1.3 - p_p(2))+1.0*(0-v_p(2));
 
-        T_F(0) = 0;
-        T_F(1) = 0;
+//        T_F(0) = 0;
+//        T_F(1) = 0;
 
         T_L = -T_F + mp * vp_dot_des ;
 //         T_L = + mp * vp_dot_des ;
