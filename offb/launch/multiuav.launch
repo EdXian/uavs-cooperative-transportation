@@ -1,0 +1,20 @@
+<launch>
+
+<node
+    pkg="offb"
+    type="geo"
+    name="geo"
+    output="screen">
+</node>
+
+<node
+    pkg="offb"
+    type="geo2"
+    name="drone2"
+    output="screen">
+</node>
+
+
+
+
+</launch>

@@ -1,0 +1,353 @@
+<?xml version='1.0'?>
+<sdf version='1.5'>
+  <model name="payload_rec">
+        <static>false</static>
+
+<link name="payload_rec">
+      <pose>0 0 0 0 0 0</pose>
+	<sensor type="imu" name="payload_imu_rec">
+		<always_on>true</always_on>
+		<update_rate>200</update_rate>
+	</sensor>
+        <inertial>
+          <inertia>
+            <ixx>0.0008330</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.0370</iyy>
+            <iyz>0</iyz>
+            <izz>0.0370</izz>
+          </inertia>
+          <mass>0.5</mass>
+        </inertial>
+
+        <collision name="my_collision">
+            <geometry>
+             <box>
+             <size>1.0 0.05 0.05</size>
+             </box>
+            </geometry>
+
+        </collision>z
+
+        <visual name="my_visual">
+            <geometry>
+             <box>
+             <size>1.0 0.05 0.05</size>
+             </box>
+            </geometry>
+        </visual>
+    </link>
+<link name="payload_rec_g_box">
+      <pose>-0.50 0 0.025 0 0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.000004165</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.000185</iyy>
+            <iyz>0</iyz>
+            <izz>0.000185</izz>
+          </inertia>
+          <mass>0.0001</mass>
+        </inertial>
+
+        <collision name="payload_rec_g_box_collision">
+            <geometry>
+             <box>
+             <size>0.01 0.01 0.01</size>
+             </box>
+            </geometry>
+
+        </collision>
+
+        <visual name="payload_rec_g_box_visual">
+            <geometry>
+             <box>
+             <size>0.01 0.01 0.01</size>
+             </box>
+            </geometry>
+        </visual>
+    </link>
+<joint name="payload_g_joint" type="fixed">
+      <parent>payload::payload_rec</parent>
+      <child>payload::payload_rec_g_box</child>
+      <pose>-0.00 0.0 0.0 0 0.0 0.0</pose>
+    </joint>
+
+<link name="payload_rec_g1_box">
+      <pose>0.50 0.0  0.025 0 0 0</pose>
+        <inertial>
+          <inertia>
+            <ixx>0.000004165</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.000185</iyy>
+            <iyz>0</iyz>
+            <izz>0.000185</izz>
+          </inertia>
+          <mass>0.0001</mass>
+        </inertial>
+
+        <collision name="payload_rec_g1_box_collision">
+            <geometry>
+             <box>
+             <size>0.01 0.01 0.01</size>
+             </box>
+            </geometry>
+
+        </collision>
+
+        <visual name="payload_rec_g1_box_visual">
+            <geometry>
+             <box>
+             <size>0.01 0.01 0.01</size>
+             </box>
+            </geometry>
+        </visual>
+    </link>
+<joint name="payload_g1_joint" type="fixed">
+      <parent>payload::payload_rec</parent>
+      <child>payload::payload_rec_g1_box</child>
+      <pose>-0.00 0.0 0.0 0 0.0 0.0</pose>
+    </joint>
+<!-- link1-->
+<link name="payload_link1">
+        <pose>-0.60 0.0  0.005 0 1.57 0</pose>
+	<gravity>1</gravity>
+		 <inertial>
+          <inertia>
+            <ixx>0.005</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.005</iyy>
+            <iyz>0</iyz>
+            <izz>0.00001</izz>
+          </inertia>
+          <mass>0.03</mass>
+        </inertial>
+
+        <collision name="collision_payload_link">
+          <geometry>
+            <cylinder>
+              <radius>0.0005</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+	  <surface>
+		<contact>
+	    <collide_without_contact>true</collide_without_contact>
+		</contact>
+	  </surface>
+
+        </collision>
+
+
+        <visual name="visual_payload_link">
+          <geometry>
+            <cylinder>
+              <radius>0.005</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+<link name="payload_link1_box">
+        <pose>-0.70 0.0  0.005 0.0 0  0</pose>
+	<gravity>1</gravity>
+		 <inertial>
+          <inertia>
+            <ixx>0.005</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.005</iyy>
+            <iyz>0</iyz>
+            <izz>0.00001</izz>
+          </inertia>
+          <mass>0.03</mass>
+        </inertial>
+
+        <collision name="collision_payload_link">
+          <geometry>
+           <box>
+             <size>0.005 0.005 0.005</size>
+             </box>
+          </geometry>
+
+        </collision>
+
+        <visual name="visual_payload_link">
+          <geometry>
+           <box>
+             <size>0.005 0.005 0.005</size>
+             </box>
+          </geometry>
+        </visual>
+      </link>
+<joint name="payload_link_joint1" type="revolute2">
+      <parent>payload::payload_rec</parent>
+      <child>payload::payload_link1</child>
+      <pose>-0.00 0.0 0.1 0 0.0 0.0</pose>
+
+      <axis>
+        <xyz>1 0 0</xyz>
+		<dynamics>
+                <damping> 5.0 </damping>
+                <spring_stiffness> 0.05 </spring_stiffness>
+		</dynamics>
+
+      </axis>
+
+      <axis2>
+        <xyz>0 1 0</xyz>
+		<dynamics>
+                <damping> 5.0 </damping>
+                <spring_stiffness> 0.05 </spring_stiffness>
+		</dynamics>	
+	
+      </axis2>
+
+	 <physics>
+	 <ode>
+	 <provide_feedback>true</provide_feedback>
+	 			<implicit_spring_damper>true</implicit_spring_damper>
+	 </ode>
+	 </physics>
+	 <sensor name="force_torque" type="force_torque">
+      <update_rate>200</update_rate>
+	  <always_on>true</always_on>
+     </sensor>
+    </joint>
+
+	<plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+		<always_on>true</always_on>
+            <updateRate>200.0</updateRate>
+            <topicName>/ft_sensor2_topic</topicName>
+	<jointName>payload_link_joint1</jointName>
+        </plugin>
+<joint name="payload_link_joint2" type="fixed">
+      <parent>payload::payload_link1_box</parent>
+      <child>payload::payload_link1</child>
+      <pose>-0.00 0.0 -0.1 0 0.0 0.0</pose>
+    </joint>
+<!-- link2 -->
+<link name="payload_link2">
+        <pose>0.60 0.0 0.005 0.0 -1.57 0</pose>
+	<gravity>1</gravity>
+		 <inertial>
+          <inertia>
+            <ixx>0.005</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.005</iyy>
+            <iyz>0</iyz>
+            <izz>0.00001</izz>
+          </inertia>
+          <mass>0.03</mass>
+        </inertial>
+
+        <collision name="collision_payload_link2">
+          <geometry>
+            <cylinder>
+              <radius>0.0005</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+
+	  <surface>
+		<contact>
+	    <collide_without_contact>true</collide_without_contact>
+		</contact>
+	  </surface>
+        </collision>
+
+
+        <visual name="visual_payload_link2">
+          <geometry>
+            <cylinder>
+              <radius>0.005</radius>
+              <length>0.1</length>
+            </cylinder>
+          </geometry>
+        </visual>
+      </link>
+<link name="payload_link2_box">
+        <pose>0.70 0.0  0.005 0 0.0 0</pose>
+	<gravity>1</gravity>
+		 <inertial>
+          <inertia>
+            <ixx>0.005</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.005</iyy>
+            <iyz>0</iyz>
+            <izz>0.00001</izz>
+          </inertia>
+          <mass>0.03</mass>
+        </inertial>
+
+        <collision name="collision_payload_link3">
+          <geometry>
+           <box>
+             <size>0.005 0.005 0.005</size>
+             </box>
+          </geometry>
+
+        </collision>
+
+
+        <visual name="visual_payload_link3">
+          <geometry>
+           <box>
+             <size>0.005 0.005 0.005</size>
+             </box>
+          </geometry>
+        </visual>
+      </link>
+<joint name="payload_link_joint3" type="revolute2">
+      <parent>payload::payload_rec</parent>
+      <child>payload::payload_link2</child>
+      <pose>-0.00 0.0 0.1 0 0.0 0.0</pose>
+
+      <axis>
+        <xyz>1 0 0</xyz>
+		<dynamics>
+                <damping> 5.0 </damping>
+                <spring_stiffness> 0.05 </spring_stiffness>
+		</dynamics>
+
+      </axis>
+
+      <axis2>
+        <xyz>0 1 0</xyz>
+		<dynamics>
+                <damping> 5.0 </damping>
+                <spring_stiffness> 0.05 </spring_stiffness>
+		</dynamics>	
+	
+      </axis2>
+
+	 <physics>
+	 <ode>
+	 <provide_feedback>true</provide_feedback>
+	 			<implicit_spring_damper>true</implicit_spring_damper>
+	 </ode>
+	 </physics>
+	 <sensor name="force_torque" type="force_torque">
+      <update_rate>200</update_rate>
+	  <always_on>true</always_on>
+     </sensor>
+    </joint>
+	<plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+		<always_on>true</always_on>
+            <updateRate>200.0</updateRate>
+            <topicName>/ft_sensor1_topic</topicName>
+	<jointName>payload_link_joint3</jointName>
+        </plugin>
+<joint name="payload_link_joint4" type="fixed">
+      <parent>payload::payload_link2_box</parent>
+      <child>payload::payload_link2</child>
+      <pose>-0.00 0.0 -0.1 0 0.0 0.0</pose>
+    </joint>
+  </model>
+</sdf>

@@ -1,0 +1,46 @@
+<launch>
+
+<node
+    pkg="offb"
+    type="coop1"
+    name="coop1"
+    output="screen">
+</node>
+
+<node
+    pkg="offb"
+    type="geo2"
+    name="drone2"
+    output="screen">
+</node>
+
+
+<!--<group ns = "leader_ukf">
+   <node pkg="UKF" name="ukf" type="force_estimatee"  >
+     <param name="topic_imu" value="/drone1/mavros/imu/data" />
+     <param name="topic_raw" value="/drone1/mavros/imu/data_raw" />
+     <param name="topic_mocap" value="/gazebo/model_states" />
+     <param name="topic_thrust" value="/drone1/mavros/rc/out" />
+     <param name="topic_mag" value="/drone1/mavros/imu/mag" />
+     <param name="topic_battery" value="/drone1/mavros/battery" />
+     <param name="topic_vel" value="/drone1/mavros/local_position/velocity_local" />
+     <param name="topic_drone" value="1" />
+   </node>
+</group>-->
+<!--  output="screen" -->
+
+<!--<group ns = "follower_ukf">
+   <node pkg="UKF" name="ukf" type="force_estimatee" >
+     <param name="topic_imu" value="/drone2/mavros/imu/data" />
+     <param name="topic_raw" value="/drone2/mavros/imu/data_raw" />
+     <param name="topic_mocap" value="/gazebo/model_states" />
+     <param name="topic_thrust" value="/drone2/mavros/rc/out" />
+     <param name="topic_mag" value="/drone2/mavros/imu/mag" />
+     <param name="topic_battery" value="/drone2/mavros/battery" />
+     <param name="topic_vel" value="/drone2/mavros/local_position/velocity_local" />
+     <param name="topic_drone" value="2" />
+   </node>
+</group>-->
+
+
+</launch>
