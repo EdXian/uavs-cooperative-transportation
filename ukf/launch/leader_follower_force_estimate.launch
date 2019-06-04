@@ -1,12 +1,12 @@
 <launch>
 
-<!--<group ns = "leader_ukf">
+<group ns = "leader_ukf">
    <node pkg="ukf" name="ukf_1" type="force_estimatee" output="screen" >
      <param name="topic_imu" value="/firefly1/imu" />
      <param name="topic_mocap" value="/firefly1/odometry_sensor1/odometry" />
      <param name="topic_drone" value="1" />
    </node>
-</group>-->
+</group>
 
 <group ns = "follower_ukf">
    <node pkg="ukf" name="ukf_2" type="force_estimatee" output="screen" >
@@ -15,5 +15,7 @@
      <param name="topic_drone" value="2" />
    </node>
 </group>
+
+<node name="payload_ukf" pkg="payload_measure" type="so3" respawn="true" />
 
 </launch>

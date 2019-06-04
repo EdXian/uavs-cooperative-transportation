@@ -21,6 +21,7 @@
 #include <qptrajectory.h>
 #include <tf2/transform_datatypes.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <sensor_msgs/Imu.h>
 #define normal
 #define PI 3.14159
 gazebo_msgs::ModelStates model_states;
@@ -72,9 +73,9 @@ void model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
             z=payload_pose.pose.orientation.z;
             w=payload_pose.pose.orientation.w;
 
-            payload_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
-                        2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
-                        2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
+//            payload_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
+//                        2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
+//                        2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
 
             tf::Quaternion Q(
             payload_pose.pose.orientation.x,
@@ -164,36 +165,28 @@ void link_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
    }
 
 }
+sensor_msgs::Imu imu_data;
+void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
+
+
+Eigen::Vector3d  data;
+imu_data = *msg;
+data<<imu_data.linear_acceleration.x , imu_data.linear_acceleration.y ,imu_data.linear_acceleration.z ;
+
+double w,x,y,z;
+x=imu_data.orientation.x;
+y=imu_data.orientation.y;
+z=imu_data.orientation.z;
+w=imu_data.orientation.w;
+
+ payload_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
+            2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
+            2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
 
 
 
-char getch()
-{
-    int flags = fcntl(0, F_GETFL, 0);
-    fcntl(0, F_SETFL, flags | O_NONBLOCK);
-
-    char buf = 0;
-    struct termios old = {0};
-    if (tcgetattr(0, &old) < 0) {
-        perror("tcsetattr()");
-    }
-    old.c_lflag &= ~ICANON;
-    old.c_lflag &= ~ECHO;
-    old.c_cc[VMIN] = 1;
-    old.c_cc[VTIME] = 0;
-    if (tcsetattr(0, TCSANOW, &old) < 0) {
-        perror("tcsetattr ICANON");
-    }
-    if (read(0, &buf, 1) < 0) {
-        //perror ("read()");
-    }
-    old.c_lflag |= ICANON;
-    old.c_lflag |= ECHO;
-    if (tcsetattr(0, TCSADRAIN, &old) < 0) {
-        perror ("tcsetattr ~ICANON");
-    }
-    return (buf);
 }
+
 
 
 Eigen::Vector3d nonholonomic_output(double x_r, double y_r,double theta_r,double v_r, double omega_r){
@@ -281,10 +274,6 @@ int main(int argc, char **argv)
   ros::Subscriber model_sub20 = nh.subscribe<gazebo_msgs::ModelStates>
            ("/gazebo/model_states", 5, model_cb);
 
-
-
-
-   //ros::Publisher  att_pub = nh.advertise<mavros_msgs::AttitudeTarget>("/drone1/mavros/setpoint_raw/attitude", 2);
    ros::Publisher feedforward_pub = nh.advertise<geometry_msgs::Point>("/feedforward", 2);
    ros::Publisher desired_pose_pub = nh.advertise<geometry_msgs::Point>("/drone1/desired_position", 2);
    ros::Publisher desired_force_pub = nh.advertise<geometry_msgs::Point>("/desired_force", 2);
@@ -302,6 +291,7 @@ int main(int argc, char **argv)
 
    ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>
            ("/follower_ukf/force_estimate", 3, est_force_cb);
+   ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1", 2, imu1_cb);
 
    ros::Rate loop_rate(50.0);
    nh.setParam("/start",false);
@@ -313,7 +303,7 @@ int main(int argc, char **argv)
    trajectory_profile p1,p2,p3,p4,p5,p6,p7,p8 , p9 , p10,p11;
    std::vector<trajectory_profile> data;
 
-   p2.pos<< 2,2,0;
+     p2.pos<< 2,2,0;
      p2.vel<< 0,0,0;
      p2.acc<< 0,0,0;
      p2.yaw = 0;
@@ -483,8 +473,8 @@ int main(int argc, char **argv)
         vp_dot_des(1) =  cmd_(1);// + omegad_dot;
         vp_dot_des(2) = 3*(1.3 - p_p(2))+1.0*(0-v_p(2));
 
-//        T_F(0) = 0;
-//        T_F(1) = 0;
+        T_F(0) = 0;
+        T_F(1) = 0;
 
         T_L = -T_F + mp * vp_dot_des ;
 //         T_L = + mp * vp_dot_des ;

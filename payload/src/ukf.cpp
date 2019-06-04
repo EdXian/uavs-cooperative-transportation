@@ -128,11 +128,6 @@ void ukf::correct(Eigen::VectorXd measure){
       Eigen::MatrixXd err_t;
       err = y_sigmavector.col(i) - y_hat;
       err_t = err.transpose();
-      /*
-      std::cout<<"err" <<std::endl<<err <<std::endl;
-      std::cout<<"err_t" <<std::endl<<err_t <<std::endl;
-      std::cout<<"M" <<std::endl<<err * err_t <<std::endl;
-     */
       P_yy += w_c(i) * err * err_t;
     }
 
@@ -148,7 +143,6 @@ void ukf::correct(Eigen::VectorXd measure){
       err_x = x_sigmavector.col(i) - x_hat;
       P_xy += w_c(i) * err_x * err_y.transpose();
     }
-//std::cout<< "y" <<std::endl<<P_xy <<std::endl;
     Kalman_gain = P_xy * (P_yy.inverse());
     x = x_hat + Kalman_gain *(y-y_hat);
     P = P_ - Kalman_gain*P_yy*(Kalman_gain.transpose());
@@ -174,20 +168,6 @@ Eigen::MatrixXd ukf::dynamics(Eigen::MatrixXd sigma_state){
 */
 }
 
-
-Eigen::MatrixXd ukf::rotate(double roll, double yaw, double pitch){
-
-    Eigen::MatrixXd frame;
-    frame.setZero(3,3);
-    double c_r = cos(roll) , s_r = sin(roll);
-    double c_p = cos(pitch) , s_p = sin(pitch);
-    double c_y = cos(yaw) , s_y = sin(yaw);
-    frame << c_p*c_y ,c_y*s_p*s_r-s_y*c_r , c_y*s_p*c_r+s_y*s_r,
-             c_p*s_y ,s_y*s_p+c_r*c_y     , s_y*s_p*c_r-c_y*s_r,
-             -1*s_p  ,s_r*c_p             , c_r*c_p            ;
-    return frame;
-}
-
 void ukf::set_measurement_matrix(Eigen::MatrixXd matrix){
     H = matrix;
 }
@@ -198,9 +178,6 @@ void ukf::set_process_noise(Eigen::MatrixXd matrix){
 void ukf::set_measurement_noise(Eigen::MatrixXd matrix){
     this->R = matrix;
 }
-
-
-
 
 ukf::~ukf(){
 

@@ -68,7 +68,18 @@
              </box>
             </geometry>
         </visual>
+
+<sensor name="IMU2" type="imu">
+   <always_on>true</always_on>
+   <plugin name="IMU2_plugin" filename="libgazebo_ros_imu_sensor.so">
+     <topicName>/IMU2</topicName>
+     <updateRateHZ>50</updateRateHZ>
+     <frameName>payload_rec_g_box</frameName>
+   </plugin>
+ </sensor>
     </link>
+
+
 <joint name="payload_g_joint" type="fixed">
       <parent>payload::payload_rec</parent>
       <child>payload::payload_rec_g_box</child>
@@ -105,7 +116,21 @@
              </box>
             </geometry>
         </visual>
+
+
+        <sensor name="IMU1" type="imu">
+
+           <plugin name="IMU1_plugin" filename="libgazebo_ros_imu_sensor.so">
+            <always_on>true</always_on>
+             <topicName>/IMU1</topicName>
+             <updateRateHZ>50</updateRateHZ>
+             <frameName>payload_rec_g1_box</frameName>
+           </plugin>
+         </sensor>
     </link>
+
+
+
 <joint name="payload_g1_joint" type="fixed">
       <parent>payload::payload_rec</parent>
       <child>payload::payload_rec_g1_box</child>
@@ -349,5 +374,9 @@
       <child>payload::payload_link2</child>
       <pose>-0.00 0.0 -0.1 0 0.0 0.0</pose>
     </joint>
+
+
+
+
   </model>
 </sdf>
