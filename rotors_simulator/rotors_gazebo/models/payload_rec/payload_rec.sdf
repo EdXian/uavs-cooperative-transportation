@@ -28,7 +28,7 @@
              </box>
             </geometry>
 
-        </collision>z
+        </collision>
 
         <visual name="my_visual">
             <geometry>

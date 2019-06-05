@@ -53,7 +53,7 @@ void pose_cb(const nav_msgs::Odometry::ConstPtr &msg){
     drone2_pose.pose = odometry.pose.pose;
     drone2_vel.twist = odometry.twist.twist;
 
-    std::cout <<drone2_pose.pose.position.x << "   " << drone2_pose.pose.position.y <<std::endl;
+   // std::cout <<drone2_pose.pose.position.x << "   " << drone2_pose.pose.position.y <<std::endl;
 
 }
 

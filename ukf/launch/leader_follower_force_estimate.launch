@@ -16,6 +16,6 @@
    </node>
 </group>
 
-<node name="payload_ukf" pkg="payload_measure" type="so3" respawn="true" />
+<node name="payload_ukf" pkg="payload_measure" type="so3" output="screen" />
 
 </launch>

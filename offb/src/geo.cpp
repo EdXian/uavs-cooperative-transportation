@@ -39,7 +39,8 @@ double last_omega;
 
 double payload_roll , payload_yaw, payload_pitch;
 Eigen::Matrix3d payload_Rotation;
-
+Eigen::Vector3d vc2_est;
+Eigen::Vector3d pc2_est;
 Eigen::Matrix3d payload_link2_Rotation;
 
 double x_e,y_e ,theta_e    ;
@@ -194,7 +195,7 @@ Eigen::Vector3d nonholonomic_output(double x_r, double y_r,double theta_r,double
 
     Eigen::Vector3d output;
     double yaw = payload_yaw;//+(PI/2);
-    err_state << x_r - p_c2(0) , y_r - p_c2(1) , theta_r - (yaw);
+    err_state << x_r - pc2_est(0) , y_r - pc2_est(1) , theta_r - (yaw);
     Eigen::Matrix3d R_I_B;
 
     theta_e = theta_r- (yaw);
@@ -256,6 +257,16 @@ void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     est_force = *msg;
 }
 
+
+
+void point2_cb(const geometry_msgs::Point::ConstPtr& msg){
+
+    pc2_est<<msg->x,msg->y,msg->z;
+
+}
+void point_cb(const geometry_msgs::Point::ConstPtr& msg){
+    vc2_est <<  msg->x , msg->y, msg->z;
+}
 geometry_msgs::PoseStamped desired_pose;
 geometry_msgs::Point record_pose;
 geometry_msgs::Point desired_force;
@@ -278,8 +289,6 @@ int main(int argc, char **argv)
    ros::Publisher desired_pose_pub = nh.advertise<geometry_msgs::Point>("/drone1/desired_position", 2);
    ros::Publisher desired_force_pub = nh.advertise<geometry_msgs::Point>("/desired_force", 2);
    ros::Publisher desired_velocity_pub = nh.advertise<geometry_msgs::Point>("/desired_velocity",2);
-
-
    ros::Publisher   traj_pub= nh.advertise<geometry_msgs::PoseStamped>("/firefly1/command/pose", 2);
 
    ros::Subscriber link_sub = nh.subscribe<gazebo_msgs::LinkStates>
@@ -292,6 +301,9 @@ int main(int argc, char **argv)
    ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>
            ("/follower_ukf/force_estimate", 3, est_force_cb);
    ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1", 2, imu1_cb);
+
+   ros::Subscriber point2_sub = nh.subscribe("pointpc2",2,point2_cb);
+   ros::Subscriber point_sub = nh.subscribe("pointvc2",2,point_cb);
 
    ros::Rate loop_rate(50.0);
    nh.setParam("/start",false);
@@ -370,7 +382,6 @@ int main(int argc, char **argv)
 
        };
 
-        std::cout <<"wergwer"<<std::endl;
 
      if(flag == false || (tick>data.size())){
                //do position control
@@ -453,9 +464,13 @@ int main(int argc, char **argv)
         Eigen::Vector3d cmd_;
          double mp=0.5;
          std::cout << "ok"<<std::endl;
+//vc2_est
+//         tmp <<  3.0 * (nonholoutput(0) - v_c2_B(0)) + nonlinearterm(0) + vd_dot ,
+//                 3.0 * (nonholoutput(1)-v_c2_B(2)) + omegad_dot  ,
+//                                                      0;
 
-         tmp <<  3.0 * (nonholoutput(0) - v_c2_B(0)) + nonlinearterm(0) + vd_dot ,
-                 3.0 * (nonholoutput(1)-v_c2_B(2)) + omegad_dot  ,
+         tmp <<  3.0 * (nonholoutput(0) - vc2_est(0)) + nonlinearterm(0) + vd_dot ,
+                 3.0 * (nonholoutput(1)-vc2_est(2)) + omegad_dot  ,
                                                       0;
 
 //        tmp <<  3.5 * (nonholoutput(0) - v_c2_B(0)) ,
