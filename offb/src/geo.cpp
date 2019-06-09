@@ -214,9 +214,7 @@ Eigen::Vector3d nonholonomic_output(double x_r, double y_r,double theta_r,double
     double v = v_r * cos(theta_e) + 1.0*x_e;  // 0.3
 
     double w = omega_r + v_r*(5.0*y_e+3.0*sin(theta_e));  //
-                            //1.0      //3.0
-    //    std::cout << "v    " << v << " w  "<<w <<std::endl;
-//    std::cout << "v_r    " << v_r << " omega_r  "<<omega_r <<std::endl;
+
     output <<v,w,0;
     return output ;
 }
@@ -448,8 +446,6 @@ int main(int argc, char **argv)
 
        //  R_-1 * omega x v - omega_dot x rcp - omega x (omega x r)
 
-       ///////
-
        Eigen::Vector3d vp_dot_des;
 
        T_F(2) = 0.5*(0.5*-9.8);    //1/2 weight of the payload.
@@ -462,20 +458,13 @@ int main(int argc, char **argv)
 
         Eigen::Vector3d tmp;
         Eigen::Vector3d cmd_;
-         double mp=0.5;
-         std::cout << "ok"<<std::endl;
-//vc2_est
-//         tmp <<  3.0 * (nonholoutput(0) - v_c2_B(0)) + nonlinearterm(0) + vd_dot ,
-//                 3.0 * (nonholoutput(1)-v_c2_B(2)) + omegad_dot  ,
-//                                                      0;
+        double mp=0.5;
+        std::cout << "ok"<<std::endl;
 
-         tmp <<  3.0 * (nonholoutput(0) - vc2_est(0)) + nonlinearterm(0) + vd_dot ,
-                 3.0 * (nonholoutput(1)-vc2_est(2)) + omegad_dot  ,
-                                                      0;
+        tmp <<  3.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + nonlinearterm(0) + vd_dot ,
+             3.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,
+                                                  0;
 
-//        tmp <<  3.5 * (nonholoutput(0) - v_c2_B(0)) ,
-//                3.5 * (nonholoutput(1)-v_c2_B(2)) ,
-//                                                     0;
         feedforward.x =nonlinearterm(0);
         feedforward.y = vd_dot;
         feedforward.z = omegad_dot;
