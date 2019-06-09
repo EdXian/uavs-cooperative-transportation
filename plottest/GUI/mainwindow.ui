@@ -119,7 +119,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>6</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -245,6 +245,31 @@
        <rect>
         <x>70</x>
         <y>50</y>
+        <width>900</width>
+        <height>400</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_7">
+     <attribute name="title">
+      <string>vel_est</string>
+     </attribute>
+     <widget class="QCustomPlot" name="qcustomplot8" native="true">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>20</y>
+        <width>900</width>
+        <height>400</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QCustomPlot" name="qcustomplot9" native="true">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>430</y>
         <width>900</width>
         <height>400</height>
        </rect>

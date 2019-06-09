@@ -98,6 +98,9 @@ private:
     void desired_force_cb(const geometry_msgs::Point::ConstPtr& msg);
     void trigger_cb(const geometry_msgs::Point::ConstPtr& msg);
     void desired_velocity_cb(const geometry_msgs::Point::ConstPtr& msg);
+
+    void vel_est_cb(const  geometry_msgs::Point::ConstPtr& msg);
+    void vel_est_b_cb(const geometry_msgs::Point::ConstPtr& msg);
     //   void me_cb(const  ukf_estimate::output::ConstPtr& msg  );
     double t_max;
     double t_min;
@@ -121,6 +124,9 @@ private:
 
     geometry_msgs::Point leader_pose ;
     geometry_msgs::Point follower_pose ;
+
+    geometry_msgs::Point c2_vel;
+    geometry_msgs::Point c2_vel_b;
 
     std::vector<QCPItemLine* > arrow;
     int tick;
@@ -151,6 +157,9 @@ private:
     ros::Subscriber force1_sub;
     ros::Subscriber desired_force_sub;
     ros::Subscriber desired_vel_sub;
+
+    ros::Subscriber vel_est_sub;
+    ros::Subscriber vel_estb_sub;
 
     ros::Subscriber cv_sub;
     ros::Subscriber me_sub;

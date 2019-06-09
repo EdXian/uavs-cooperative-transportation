@@ -141,6 +141,7 @@ int main(int argc, char **argv)
   ros::Publisher point3_pub = nh.advertise<geometry_msgs::Point>("pointd",2);
   ros::Publisher point2_pub = nh.advertise<geometry_msgs::Point>("pointpc2",2);
   ros::Publisher point_pub = nh.advertise<geometry_msgs::Point>("pointvc2",2);
+  ros::Publisher vel_est_pub = nh.advertise<geometry_msgs::Point>("est_vel",2);
 
 
   ros::Rate loop_rate(50);
@@ -202,8 +203,10 @@ int main(int argc, char **argv)
      measure << pc(0),pc(1),pc(2),pa(0),pa(1),pa(2);
 
      forceest1.correct(measure);
-    geometry_msgs::Point point ,point2 ,point3;
+    geometry_msgs::Point point ,point2 ,point3 , point_vel;
     Eigen::Vector3d vc1_I = Eigen::Vector3d(forceest1.x[vc1_x],forceest1.x[vc1_y],0);
+    point_vel.x = forceest1.x[vc1_x];
+    point_vel.y = forceest1.x[vc1_y];
     Eigen::Vector3d vc1_B = payload_rotation.transpose() *vc1_I  ;
     point.x = vc1_B(0) ;    //linear velocity in payload frame
     point.z =  omega_p(2);
@@ -215,7 +218,7 @@ int main(int argc, char **argv)
     point2.x = pc2(0);  //position in inertial frame
     point2.y = pc2(1);
 
-
+    vel_est_pub.publish(point_vel);
     point_pub.publish(point);
     point3_pub.publish(point3);
     point2_pub.publish(point2);
