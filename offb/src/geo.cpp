@@ -22,6 +22,7 @@
 #include <tf2/transform_datatypes.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <sensor_msgs/Imu.h>
+#include <nav_msgs/Odometry.h>
 #define normal
 #define PI 3.14159
 gazebo_msgs::ModelStates model_states;
@@ -52,120 +53,41 @@ mavros_msgs::State current_state;
 
 
 
-void model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
-    model_states = *msg;
-    for(unsigned int i=0;i<model_states.name.size();i++){
-        if(model_states.name[i].compare("payload")==0){
-            payload_pose.pose.position = model_states.pose[i].position;
-            payload_pose.pose.orientation= model_states.pose[i].orientation;
+//void model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
+////    model_states = *msg;
+////    for(unsigned int i=0;i<model_states.name.size();i++){
+////        if(model_states.name[i].compare("payload")==0){
+//////            payload_pose.pose.position = model_states.pose[i].position;
+//////            payload_pose.pose.orientation= model_states.pose[i].orientation;
 
-            v_p << model_states.twist[i].linear.x , model_states.twist[i].linear.y ,model_states.twist[i].linear.z ;
-            p_p << model_states.pose[i].position.x ,  model_states.pose[i].position.y , model_states.pose[i].position.z;
-            v_omega_p << model_states.twist[i].angular.x ,model_states.twist[i].angular.y ,model_states.twist[i].angular.z ;
-            tf::Quaternion quat1(payload_pose.pose.orientation.x,
-                                 payload_pose.pose.orientation.y,
-                                 payload_pose.pose.orientation.z,
-                                 payload_pose.pose.orientation.w);
+////            v_p << model_states.twist[i].linear.x , model_states.twist[i].linear.y ,model_states.twist[i].linear.z ;
 
+////           // p_p << model_states.pose[i].position.x ,  model_states.pose[i].position.y , model_states.pose[i].position.z;
+////        }
 
-            double x , y, z, w;
-            x=payload_pose.pose.orientation.x;
-            y=payload_pose.pose.orientation.y;
-            z=payload_pose.pose.orientation.z;
-            w=payload_pose.pose.orientation.w;
+////        if(model_states.name[i].compare("firefly1")==0){
 
-//            payload_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
-//                        2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
-//                        2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
+//////            leader_pose.pose.position = model_states.pose[i].position;
+//////            leader_pose.pose.orientation = model_states.pose[i].orientation;
+//////            leader_vel.twist.linear = model_states.twist[i].linear;
+//////            leader_vel.twist.angular = model_states.twist[i].angular;
 
-            tf::Quaternion Q(
-            payload_pose.pose.orientation.x,
-            payload_pose.pose.orientation.y,
-            payload_pose.pose.orientation.z,
-            payload_pose.pose.orientation.w   );
-            tf::Matrix3x3(Q).getRPY(payload_roll,payload_pitch,payload_yaw);
+//////            ori<< leader_pose.pose.orientation.w, leader_pose.pose.orientation.x,leader_pose.pose.orientation.y,leader_pose.pose.orientation.z;
+//////            pose << leader_pose.pose.position.x , leader_pose.pose.position.y, leader_pose.pose.position.z;
+//////            vel  << leader_vel.twist.linear.x, leader_vel.twist.linear.y, leader_vel.twist.linear.z;
+//////           ang << leader_vel.twist.angular.x, leader_vel.twist.angular.y,leader_vel.twist.angular.z;
 
-        }
-        if(model_states.name[i].compare("")==0){
+////        }
 
-        }
-        if(model_states.name[i].compare("firefly1")==0){
-            leader_pose.pose.position = model_states.pose[i].position;
-            leader_pose.pose.orientation = model_states.pose[i].orientation;
-            leader_vel.twist.linear = model_states.twist[i].linear;
-            leader_vel.twist.angular = model_states.twist[i].angular;
-
-            ori<< leader_pose.pose.orientation.w, leader_pose.pose.orientation.x,leader_pose.pose.orientation.y,leader_pose.pose.orientation.z;
-            pose << leader_pose.pose.position.x , leader_pose.pose.position.y, leader_pose.pose.position.z;
-            vel  << leader_vel.twist.linear.x, leader_vel.twist.linear.y, leader_vel.twist.linear.z;
-            ang << leader_vel.twist.angular.x, leader_vel.twist.angular.y,leader_vel.twist.angular.z;
-
-
-            tf::Quaternion Q(
-            leader_pose.pose.orientation.x,
-            leader_pose.pose.orientation.y,
-            leader_pose.pose.orientation.z,
-            leader_pose.pose.orientation.w   );
-
-        }
-
-    }
-}
+////    }
+//}
 
 gazebo_msgs::LinkStates link_states;
 Eigen::Matrix3d R_c2_B;
 Eigen::Vector3d v_c2_I;
 Eigen::Vector3d v_c2_B;
-void link_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
-   link_states = *msg;
 
 
-   if(link_states.name.size()>0){
-       for (unsigned int i=0;i<link_states.name.size();i++) {
-
-
-           if(link_states.name[i].compare("payload::payload_link1_box") == 0){
-
-
-
-               double x , y, z, w;
-               x=link_states.pose[i].orientation.x;
-               y=link_states.pose[i].orientation.y;
-               z=link_states.pose[i].orientation.z;
-               w=link_states.pose[i].orientation.w;
-
-               payload_link2_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
-                           2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
-                           2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
-           }
-
-
-
-           if(link_states.name[i].compare("payload::payload_rec_g_box")==0){
-
-            p_c2 << link_states.pose[i].position.x,
-                    link_states.pose[i].position.y,
-                    link_states.pose[i].position.z;
-
-            v_c2_I << link_states.twist[i].linear.x,
-                      link_states.twist[i].linear.y,
-                      link_states.twist[i].angular.z;
-
-
-            R_c2_B << cos(payload_yaw), sin(payload_yaw) ,0,
-                     -sin(payload_yaw), cos(payload_yaw) ,0,
-                         0            ,      0           ,1;
-
-            v_c2_B = R_c2_B * v_c2_I;
-
-
-           }
-
-       }
-
-   }
-
-}
 sensor_msgs::Imu imu_data;
 void imu1_cb(const sensor_msgs::Imu::ConstPtr& msg){
 
@@ -179,13 +101,30 @@ x=imu_data.orientation.x;
 y=imu_data.orientation.y;
 z=imu_data.orientation.z;
 w=imu_data.orientation.w;
+tf::Quaternion Q(
+x,
+y,
+z,
+w   );
+tf::Matrix3x3(Q).getRPY(payload_roll,payload_pitch,payload_yaw);
 
- payload_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
-            2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
-            2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
+payload_Rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
+                    2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
+                    2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
 
 
+R_c2_B << cos(payload_yaw), sin(payload_yaw) ,0,
+         -sin(payload_yaw), cos(payload_yaw) ,0,
+             0    ,      0   ,1;
 
+Eigen::Vector3d tmp;
+tmp <<  imu_data.angular_velocity.x,
+        imu_data.angular_velocity.y,
+        imu_data.angular_velocity.z;
+
+v_c2_I = (payload_Rotation)* tmp;
+v_c2_B = R_c2_B * v_c2_I;
+v_omega_p = v_c2_B;
 }
 
 
@@ -253,18 +192,44 @@ void force1_cb(const geometry_msgs::WrenchStamped::ConstPtr &msg){
 
 void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     est_force = *msg;
+
 }
 
+void est_vel_cb(const geometry_msgs::Point::ConstPtr& msg){
+    Eigen::Vector3d pc1= Eigen::Vector3d(msg->x,msg->y,msg->z);
+    Eigen::Vector3d rcp = Eigen::Vector3d(-0.5,0.0,0.0);
+    v_p = pc1 + v_c2_I.cross(rcp);
 
+
+    std::cout << "=========="<<std::endl;
+    std::cout << v_p.transpose()<<std::endl;
+
+}
 
 void point2_cb(const geometry_msgs::Point::ConstPtr& msg){
 
     pc2_est<<msg->x,msg->y,msg->z;
-
+    p_p(2) = msg->z;
 }
 void point_cb(const geometry_msgs::Point::ConstPtr& msg){
     vc2_est <<  msg->x , msg->y, msg->z;
+
 }
+
+nav_msgs::Odometry odom;
+void odom_cb(const nav_msgs::Odometry::ConstPtr& msg){
+    odom = *msg;
+
+   leader_pose.pose = odom.pose.pose;
+   leader_vel.twist = odom.twist.twist;
+
+    ori<< leader_pose.pose.orientation.w, leader_pose.pose.orientation.x,leader_pose.pose.orientation.y,leader_pose.pose.orientation.z;
+    pose << leader_pose.pose.position.x , leader_pose.pose.position.y, leader_pose.pose.position.z;
+    vel  << leader_vel.twist.linear.x, leader_vel.twist.linear.y, leader_vel.twist.linear.z;
+   ang << leader_vel.twist.angular.x, leader_vel.twist.angular.y,leader_vel.twist.angular.z;
+
+}
+
 geometry_msgs::PoseStamped desired_pose;
 geometry_msgs::Point record_pose;
 geometry_msgs::Point desired_force;
@@ -280,28 +245,33 @@ int main(int argc, char **argv)
 
   ROS_INFO("Hello world!");
 
-  ros::Subscriber model_sub20 = nh.subscribe<gazebo_msgs::ModelStates>
-           ("/gazebo/model_states", 5, model_cb);
+
 
    ros::Publisher feedforward_pub = nh.advertise<geometry_msgs::Point>("/feedforward", 2);
    ros::Publisher desired_pose_pub = nh.advertise<geometry_msgs::Point>("/drone1/desired_position", 2);
    ros::Publisher desired_force_pub = nh.advertise<geometry_msgs::Point>("/desired_force", 2);
    ros::Publisher desired_velocity_pub = nh.advertise<geometry_msgs::Point>("/desired_velocity",2);
    ros::Publisher   traj_pub= nh.advertise<geometry_msgs::PoseStamped>("/firefly1/command/pose", 2);
+   ros::Subscriber odom_sub = nh.subscribe<nav_msgs::Odometry>
+           ("/firefly1/odometry_sensor1/odometry", 3, odom_cb);
+   ros::Subscriber est_vel_sub = nh.subscribe<geometry_msgs::Point>("est_vel",3,est_vel_cb);
 
-   ros::Subscriber link_sub = nh.subscribe<gazebo_msgs::LinkStates>
-           ("/gazebo/link_states", 3, link_cb);
-   ros::Subscriber force2_sub = nh.subscribe<geometry_msgs::WrenchStamped>
-           ("/ft_sensor2_topic", 3, force2_cb);
-   ros::Subscriber force1_sub = nh.subscribe<geometry_msgs::WrenchStamped>
-           ("/ft_sensor1_topic", 3, force1_cb);
+  ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>
+          ("/follower_ukf/force_estimate", 3, est_force_cb);
+  ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1", 2, imu1_cb);
 
-   ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>
-           ("/follower_ukf/force_estimate", 3, est_force_cb);
-   ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1", 2, imu1_cb);
+  ros::Subscriber point2_sub = nh.subscribe("pointpc2",2,point2_cb);
+  ros::Subscriber point_sub = nh.subscribe("pointvc2",2,point_cb);
+  //  ros::Subscriber model_sub20 = nh.subscribe<gazebo_msgs::ModelStates>
+  //           ("/gazebo/model_states", 5, model_cb);
+//   ros::Subscriber link_sub = nh.subscribe<gazebo_msgs::LinkStates>
+//           ("/gazebo/link_states", 3, link_cb);
+//   ros::Subscriber force2_sub = nh.subscribe<geometry_msgs::WrenchStamped>
+//           ("/ft_sensor2_topic", 3, force2_cb);
 
-   ros::Subscriber point2_sub = nh.subscribe("pointpc2",2,point2_cb);
-   ros::Subscriber point_sub = nh.subscribe("pointvc2",2,point_cb);
+//   ros::Subscriber force1_sub = nh.subscribe<geometry_msgs::WrenchStamped>
+//           ("/ft_sensor1_topic", 3, force1_cb);
+
 
    ros::Rate loop_rate(50.0);
    nh.setParam("/start",false);
@@ -313,7 +283,7 @@ int main(int argc, char **argv)
    trajectory_profile p1,p2,p3,p4,p5,p6,p7,p8 , p9 , p10,p11;
    std::vector<trajectory_profile> data;
 
-     p2.pos<< 2,2,0;
+     p2.pos<< 3,1,0;
      p2.vel<< 0,0,0;
      p2.acc<< 0,0,0;
      p2.yaw = 0;
@@ -475,7 +445,7 @@ int main(int argc, char **argv)
         //
         vp_dot_des(0) =  cmd_(0);// + nonlinearterm(0);// + vd_dot ;
         vp_dot_des(1) =  cmd_(1);// + omegad_dot;
-        vp_dot_des(2) = 3*(1.3 - p_p(2))+1.0*(0-v_p(2));
+        vp_dot_des(2) = 3*(1.3 - p_p(2))+0.5*(0-v_p(2));
 
         T_F(0) = 0;
         T_F(1) = 0;

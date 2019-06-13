@@ -19,7 +19,7 @@
 double mocap1_roll , mocap1_yaw ,mocap1_pitch;
 gazebo_msgs::ModelStates model;
 gazebo_msgs::LinkStates links;
-Eigen::Vector3d pc,pc2,pv,pa,pb,connector1,pc2_actual;
+Eigen::Vector3d pc,pc2,pv,pa,pb,connector1,pc2_actual,pp;
 sensor_msgs::Imu imu_data;
 Eigen::Matrix3d payload_rotation;
 Eigen::Matrix3d uav_rotation;
@@ -46,7 +46,7 @@ payload_rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
             2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
 
 
-pa = payload_rotation * data - Eigen::Vector3d(0,0,9.8);
+pa = payload_rotation * data - Eigen::Vector3d(0,0,9.81);
 
 
 omega_p = payload_rotation*wdata;
@@ -56,33 +56,33 @@ omega_p = payload_rotation*wdata;
 
 
 void link_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
-    links = *msg;
+//    links = *msg;
 
-    if(links.name.size()>0){
-        for(unsigned int i=0;i<links.name.size();i++){
-            if(links.name[i] == "payload::payload_rec_g1_box"){
-                pv<<links.twist[i].linear.x,
-                    links.twist[i].linear.y,
-                    links.twist[i].linear.z;
+//    if(links.name.size()>0){
+//        for(unsigned int i=0;i<links.name.size();i++){
+//            if(links.name[i] == "payload::payload_rec_g1_box"){
+//                pv<<links.twist[i].linear.x,
+//                    links.twist[i].linear.y,
+//                    links.twist[i].linear.z;
 
-//                pc<<links.pose[i].position.x,
-//                        links.pose[i].position.y,
-//                        links.pose[i].position.z;
+////                pc<<links.pose[i].position.x,
+////                        links.pose[i].position.y,
+////                        links.pose[i].position.z;
 
 
-            }
-            if(links.name[i] == "payload::payload_link2_box"){
+//            }
+//            if(links.name[i] == "payload::payload_link2_box"){
 
-            }
-            if(links.name[i] == "payload::payload_rec_g_box"){
-                pc2_actual<<links.pose[i].position.x,
-                            links.pose[i].position.y,
-                            links.pose[i].position.z;
+//            }
+//            if(links.name[i] == "payload::payload_rec_g_box"){
+//                pc2_actual<<links.pose[i].position.x,
+//                            links.pose[i].position.y,
+//                            links.pose[i].position.z;
 
-            }
+//            }
 
-        }
-    }
+//        }
+//    }
 
 }
   Eigen::Vector3d  PL, data;
@@ -95,6 +95,7 @@ double L = 0.5; // the length of the payload
 f<<msg->x , msg->y , msg->z;
  pb  =    PL    -  uav_rotation * Eigen::Vector3d(0,0,0.05);
  pc = pb+(f/f.norm())*l;
+
 //find pc2
  Eigen::Matrix3d payload_yaw_rotation;
 // payload_yaw_rotation << cos(payload_yaw) , -sin(payload_yaw) , 0,
@@ -103,6 +104,8 @@ f<<msg->x , msg->y , msg->z;
 
 
    pc2 =  pc +  payload_rotation * Eigen::Vector3d(-1.0,0,0);
+   pp = pc+payload_rotation* Eigen::Vector3d(-0.5,0,0);
+
 }
 void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg){
     leader_pose = *msg;
@@ -139,6 +142,7 @@ int main(int argc, char **argv)
   ros::Subscriber odometry_sub = nh.subscribe("/firefly1/odometry_sensor1/odometry",2,odometry_cb);
 
   ros::Publisher point3_pub = nh.advertise<geometry_msgs::Point>("pointd",2);
+  ros::Publisher point4_pub = nh.advertise<geometry_msgs::Point>("pointvc1",2);
   ros::Publisher point2_pub = nh.advertise<geometry_msgs::Point>("pointpc2",2);
   ros::Publisher point_pub = nh.advertise<geometry_msgs::Point>("pointvc2",2);
   ros::Publisher vel_est_pub = nh.advertise<geometry_msgs::Point>("est_vel",2);
@@ -200,23 +204,22 @@ int main(int argc, char **argv)
 
      measure.setZero(measurementsize);
 
-     measure << pc(0),pc(1),pc(2),pa(0),pa(1),pa(2);
+     measure << pc(0),pc(1),pc(2),pa(0),pa(1), (pa(2));
 
      forceest1.correct(measure);
-    geometry_msgs::Point point ,point2 ,point3 , point_vel;
+    geometry_msgs::Point point ,point2 ,point3 , point_vel , point_vc1;
     Eigen::Vector3d vc1_I = Eigen::Vector3d(forceest1.x[vc1_x],forceest1.x[vc1_y],0);
     point_vel.x = forceest1.x[vc1_x];
     point_vel.y = forceest1.x[vc1_y];
+    point_vel.z = forceest1.x[vc1_z];
+
     Eigen::Vector3d vc1_B = payload_rotation.transpose() *vc1_I  ;
     point.x = vc1_B(0) ;    //linear velocity in payload frame
     point.z =  omega_p(2);
 
-
-//    point2.x = pc2_actual(0);  //position in inertial frame
-//    point2.y = pc2_actual(1);
-
     point2.x = pc2(0);  //position in inertial frame
     point2.y = pc2(1);
+    point2.z = pp(2);
 
     vel_est_pub.publish(point_vel);
     point_pub.publish(point);

@@ -61,6 +61,8 @@
   </group>
 
 <arg name = "sdf" default = "$(find rotors_gazebo)/models/payload_rec/payload_rec.sdf"/>
+<arg name = "obstacle_sdf" default = "$(find rotors_gazebo)/models/obstacle/obstacle.sdf"/>
+
 <group ns = "payload">
         <node name="payload_rec" pkg="gazebo_ros" type="spawn_model" output="screen"
         args="-sdf -file $(arg sdf)
@@ -71,6 +73,34 @@
         -R 0
         -P 0
         -Y 0"/>
+</group>
+
+ <group ns="obstalce1">
+
+<node name="obstalce" pkg="gazebo_ros" type="spawn_model" output="screen"
+args="-sdf -file $(arg obstacle_sdf)
+-model obstalce
+-x -5
+-y -5
+-z 0
+-R 0
+-P 0
+-Y 0"/>
+
+</group>
+
+<group ns="obstalce2">
+
+<node name="obstalce2" pkg="gazebo_ros" type="spawn_model" output="screen"
+args="-sdf -file $(arg obstacle_sdf)
+-model obstalce2
+-x -5
+-y -7
+-z 0
+-R 0
+-P 0
+-Y 0"/>
+
 </group>
 
 
