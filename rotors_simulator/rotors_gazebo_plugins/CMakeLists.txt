@@ -459,7 +459,12 @@ if (NOT NO_ROS)
 endif()
 list(APPEND targets_to_install payload_joint_plugin)
 
-
+add_library(obstacle_plugin SHARED src/obstacle_plugin.cpp)
+target_link_libraries(obstacle_plugin ${target_linking_LIBRARIES}  ${OpenCV_LIBRARIES})
+if (NOT NO_ROS)
+  add_dependencies(obstacle_plugin ${catkin_EXPORTED_TARGETS})
+endif()
+list(APPEND targets_to_install obstacle_plugin)
 
 
 ##===================================== OPTICAL FLOW PLUGIN ======================================//
