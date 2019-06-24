@@ -203,6 +203,7 @@ add_library(
 #add_executable(thrust src/thrust.cpp)
 #add_executable(apply_wrench src/apply_wrench.cpp)
 add_executable(geo src/geo.cpp)
+add_executable(geo_plan src/geo_plan.cpp)
 add_executable(geo2 src/geo2.cpp)
 add_executable(obstacle src/obstacle.cpp)
 
@@ -269,6 +270,13 @@ target_link_libraries(
 )
 target_link_libraries(
     geo
+     ${catkin_LIBRARIES}
+     ${PYTHON_LIBRARIES}
+     qptrajectory
+     geometric_controller
+)
+target_link_libraries(
+    geo_plan
      ${catkin_LIBRARIES}
      ${PYTHON_LIBRARIES}
      qptrajectory

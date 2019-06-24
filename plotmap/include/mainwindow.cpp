@@ -22,12 +22,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 void MainWindow::qpsolve_button2(){
-
-}
-void MainWindow::qpsolve_button(){
     qp_curve_data.clear();
     std::vector<trajectory_profile> data;
-    double dt=0.1;
+    double dt=0.5;
     double T=0;
     Eigen::VectorXd C_x,C_y , theta_x,theta_y;
     Eigen::MatrixXd A_x, A_y;
@@ -42,101 +39,67 @@ void MainWindow::qpsolve_button(){
 
     for(unsigned int i=0;i< path.poses.size();i++){
         tmp_path.poses.push_back(path.poses[path.poses.size()-1-i]);
-//        std::cout << tmp_path.poses[i].pose.position.x << "  "
-//                << tmp_path.poses[i].pose.position.y<<std::endl;
     }
+
     path = tmp_path;
     //split the path into 10 segments.
-    for(unsigned int i=0; i< (path.poses.size()/seg_size)+1 ; i++){
-        nav_msgs::Path data;
-        if((path.poses.size() - count)/seg_size > 0){
-            for(unsigned int j=0;j<10;j++){
-                data.poses.push_back(path.poses[count]);
-                count++;
-            }
-        }else{
-            int redun = path.poses.size();
-            for(unsigned int j=0;j<(redun - (redun/10)*10 );j++){
-                data.poses.push_back(path.poses[count]);
-                count++;
-            }
-
+    A_x.setZero(path.poses.size(),6); //sixth order polynomial
+    A_y.setZero(path.poses.size(),6);
+    C_x.setZero(path.poses.size());
+    C_y.setZero(path.poses.size());
+    T=0;
+    for(unsigned int i=0;i<path.poses.size();i++){
+        double t_k=1;
+        for(unsigned int j=0;j<6;j++){
+            A_x(i,j) = t_k;
+            t_k = t_k* T;
         }
-        seg_vec.push_back(data);
+        T+=dt;
     }
-
-//    std::cout <<  "segments size = "   <<seg_vec.size()<<std::endl;
-//    for(unsigned int i=0;i<seg_vec.size();i++){
-//        std::cout <<  "seg" << i << std::endl;
-//        for(unsigned int j=0;j<seg_vec[i].poses.size();j++){
-//            std::cout << seg_vec[i].poses[j].pose.position.x <<"  "
-//                      << seg_vec[i].poses[j].pose.position.y << std::endl;
-
-//        }
-//    }
-
-
-
-    for(unsigned int m=0;m<seg_vec.size();m++){
-            A_x.setZero(seg_vec[m].poses.size(),6); //sixth order polynomial
-            A_y.setZero(seg_vec[m].poses.size(),6);
-            C_x.setZero(seg_vec[m].poses.size());
-            C_y.setZero(seg_vec[m].poses.size());
-            T=0;
-            for(unsigned int i=0;i<seg_vec[m].poses.size();i++){
-                double t_k=1;
-                for(unsigned int j=0;j<6;j++){
-                    A_x(i,j) = t_k;
-                    t_k = t_k* T;
-                }
-                T+=dt;
-            }
-
-            A_y = A_x;
-            for(unsigned int j=0;j<seg_vec[m].poses.size();j++){
-                C_x(j) = seg_vec[m].poses[seg_vec[m].poses.size()-1-j].pose.position.x;
-                C_y(j) = seg_vec[m].poses[seg_vec[m].poses.size()-1-j].pose.position.y;
-            }
-            theta_x = (A_x.transpose()*A_x).inverse()*A_x.transpose()*C_x;
-            theta_y = (A_y.transpose()*A_y).inverse()*A_y.transpose()*C_y;
-            v_x.push_back(theta_x);
-            v_y.push_back(theta_y);
+    A_y = A_x;
+    for(unsigned int j=0;j<path.poses.size();j++){
+        C_x(j) = path.poses[path.poses.size()-1-j].pose.position.x;
+        C_y(j) = path.poses[path.poses.size()-1-j].pose.position.y;
     }
-//    std::cout << v_x.size() << "  " <<v_y.size()<<std::endl;
-//    for(unsigned int i=0;i<v_x.size();i++){
-//        std::cout << "==================="<<std::endl;
-//        std::cout << v_x[i].transpose() << std::endl << v_y[i].transpose() <<std::endl;
-//    }
-    std::vector<double> px,py;
-    for(unsigned int i=0;i<v_x.size()-1;i++){
-        for(unsigned int j=0;j<10;j++){
-            double t = (10-j)*dt;
+    theta_x = (A_x.transpose()*A_x).inverse()*A_x.transpose()*C_x;
+    theta_y = (A_y.transpose()*A_y).inverse()*A_y.transpose()*C_y;
 
-            double x =  v_x[i](0)+
-                        v_x[i](1)*t+
-                        v_x[i](2)*t*t+
-                        v_x[i](3)*t*t*t+
-                        v_x[i](4)*t*t*t*t+
-                        v_x[i](5)*t*t*t*t*t;
-            double y =  v_y[i](0)+
-                        v_y[i](1)*t+
-                        v_y[i](2)*t*t+
-                        v_y[i](3)*t*t*t+
-                        v_y[i](4)*t*t*t*t+
-                        v_y[i](5)*t*t*t*t*t;
-                        px.push_back(x) ;
-                        py.push_back(y);
-//           qp_curve_data.push_back(QCPCurveData(index,x,y));
-//            index++;
-        }
+double endtime = path.poses.size() *dt;
+    for(unsigned int i=0; i<1000; i++){
+        double t = (1000-i)* (endtime/(1000-0));
+        double x =  theta_x(0)+
+                    theta_x(1)*t+
+                    theta_x(2)*t*t+
+                    theta_x(3)*t*t*t+
+                    theta_x(4)*t*t*t*t+
+                    theta_x(5)*t*t*t*t*t;
+        double y =  theta_y(0)+
+                    theta_y(1)*t+
+                    theta_y(2)*t*t+
+                    theta_y(3)*t*t*t+
+                    theta_y(4)*t*t*t*t+
+                    theta_y(5)*t*t*t*t*t;
+        //std::cout << x << " \t " << y << std::endl;
+        qp_curve_data.push_back(QCPCurveData(index,x,y));
+        index++;
+
+        double vx =  0*theta_x(0)+
+                    1*theta_x(1)+
+                    2*theta_x(2)*t+
+                    3*theta_x(3)*t*t+
+                    4*theta_x(4)*t*t*t+
+                    5*theta_x(5)*t*t*t*t;
+        double vy =  0*theta_y(0)+
+                    1*theta_y(1)+
+                    2*theta_y(2)*t+
+                    3*theta_y(3)*t*t+
+                    4*theta_y(4)*t*t*t+
+                    5*theta_y(5)*t*t*t*t;
+        ui->vel_plot->graph(0)->addData(i*endtime/(1000-0),vx);
+        ui->vel_plot->graph(1)->addData(i*endtime/(1000-0),vy);
+        ui->vel_plot->graph(0)->setPen(QPen(Qt::red));
     }
-
-
-    for(unsigned int i=0;i<px.size();i++){
-        std::cout << px[i] << " ==  " << py[i] << std::endl;
-        qp_curve_data.push_back(QCPCurveData(i,px[i],py[i]));
-
-    }
+    std::cout << "index"<<  index  <<std::endl;
     path_curve->data()->clear();
     qp_path_curve->data()->set(qp_curve_data);
     QPen pen;
@@ -144,9 +107,31 @@ void MainWindow::qpsolve_button(){
     pen.setColor(Qt::green);
     qp_path_curve->setPen(pen);
     ui->plot->replot();
+    ui->vel_plot->replot();
 
-   // traj_pub.publish(obstacle_path);
-  //  std::cout << " profile counts : " << data.size() << std::endl;
+}
+
+
+void MainWindow::qpsolve_button(){
+    std::vector<trajectory_profile> data;
+    qp_curve_data.clear();
+    data = plan.get_profile(path_vec, path_vec.size(), 0.02);
+    std::cout << "profile count" << data.size()<<std::endl;
+    for(unsigned int i=0;i< data.size();i++){
+        qp_curve_data.push_back(QCPCurveData(i,data[i].pos(0),data[i].pos(1)));
+        ui->vel_plot->graph(0)->addData(i*0.02 , data[i].vel(0));
+        ui->vel_plot->graph(1)->addData(i*0.02 , data[i].vel(1));
+
+    }
+
+
+    path_curve->data()->clear();
+    qp_path_curve->data()->set(qp_curve_data);
+    QPen pen;
+    pen.setWidth(3);
+    pen.setColor(Qt::green);
+    qp_path_curve->setPen(pen);
+    ui->plot->replot();
 }
 
 void MainWindow::ros_sub_pub_init(){
@@ -156,7 +141,17 @@ void MainWindow::ros_sub_pub_init(){
     end_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal" ,1 );
     traj_pub = nh.advertise<nav_msgs::Path>("/obstacle_avoidance_path",1);
 }
+void MainWindow::plot_vehicle(){
 
+    QCPItemLine   *line;
+    line = new  QCPItemLine(ui->plot);
+
+//    line->start->setCoords(path.poses[i+1].pose.position.x ,path.poses[i+1].pose.position.y);
+//    line->end->setCoords( path.poses[i].pose.position.x ,path.poses[i].pose.position.y);
+
+    line->setHead(QCPLineEnding::esSpikeArrow);
+
+}
 void MainWindow::plot_init(){
 
     ui->plot->setOpenGl(true,4);
@@ -172,6 +167,18 @@ void MainWindow::plot_init(){
     ui->plot->yAxis->grid()->setVisible(false);
 
 
+
+    ui->vel_plot->addGraph();
+    ui->vel_plot->addGraph();
+
+
+
+    ui->vel_plot->axisRect()->setupFullAxesBox(true);
+    ui->vel_plot->setInteractions(QCP::iSelectAxes | QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+
+    ui->vel_plot->xAxis->setRange(0,100);
+    ui->vel_plot->yAxis->setRange(-3,3);
+
 }
 void MainWindow::save_button(){
     QString filename = QFileDialog::getSaveFileName(0,"Save file",QDir::currentPath(),
@@ -179,8 +186,6 @@ void MainWindow::save_button(){
                new QString("png files (*.png)"));
     ui->plot->savePng(filename, 0, 0, 3,100, -1);
 }
-
-
 
 void MainWindow::click_button(){
 
@@ -286,12 +291,7 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
 
             line->setHead(QCPLineEnding::esSpikeArrow);
 
-//            if( (i< path.poses.size()-1)){
-//                trajectory_profile start, end;
-//                start.pos << path.poses[i+1].pose.position.x,path.poses[i+1].pose.position.y,0;
-//                end.pos << path.poses[i].pose.position.x,path.poses[i].pose.position.y,0;
-//                path_vec.push_back(segments(start,end,1.0));
-//            }
+
 
             QPen arrow_pen;
             arrow_pen.setWidth(2);
@@ -307,22 +307,26 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
         //inverse the waypoint vector
         std::vector<geometry_msgs::PoseStamped> tmp;
         tmp.clear();
-        tmp.resize(path.poses.size());
-        for(unsigned int i=0;i< path.poses.size();i++){
-           tmp[i] = path.poses[path.poses.size()-i-1];
-        }
-//        for( unsigned int i=0;i< tmp.size();i++){
-//            if( (i< (tmp.size()-1))){
-//                if(i%10 == 0){
-//                    trajectory_profile start, end;
-//                    start.pos << tmp[i].pose.position.x,tmp[i].pose.position.y,0;
-//                    end.pos << tmp[i+10].pose.position.x,tmp[i+10].pose.position.y,0;
-//                    std::cout << i<< "  " <<start.pos.transpose() << "\t "<< end.pos.transpose()<<std::endl;
-//                    path_vec.push_back(segments(start,end,1.0));
 
-//                }
-//            }
-//        }
+        int  c = 0;
+        for(unsigned int i=0;i< path.poses.size();i++){
+
+                tmp.push_back( path.poses[path.poses.size()-i-1]);
+
+        }
+
+
+
+        for(unsigned int k=0;k<tmp.size();k++){
+            if( (k< tmp.size()-1)   ){
+                trajectory_profile start, end;
+                start.pos << tmp[k].pose.position.x,tmp[k].pose.position.y,0;
+                end.pos << tmp[k+1].pose.position.x,tmp[k+1].pose.position.y,0;
+
+                double dist = (start.pos - end.pos).norm();
+                path_vec.push_back(segments(start,end,1));
+            }
+        }
 
         //marker  location of start and goal
         int end_id = 0;

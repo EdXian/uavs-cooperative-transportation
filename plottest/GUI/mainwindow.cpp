@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("cooperative transportation");
+    rotation_matrix.setZero(3,3);
     local_sub = nh.subscribe<geometry_msgs::Point>("/uav2/local_position",2,&MainWindow::local_cb,this);
     traj_sub=nh.subscribe<geometry_msgs::Point>("/uav2/desired_position",2,&MainWindow::traj_cb,this);
     desired_traj_sub =nh.subscribe<geometry_msgs::Point>("/drone1/desired_position",2 ,&MainWindow::desired_traj_cb,this);
@@ -458,9 +459,12 @@ void MainWindow::force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
     pen.setWidth(2);
     Eigen::Vector3d data , adata;
     data <<msg->wrench.force.x , msg->wrench.force.y ,msg->wrench.force.z;
+
+
     adata = payload_link1_rotation*data;
-    ui->qcustomplot3->graph(0)->addData(time , -1.0*adata(0));
-    ui->qcustomplot4->graph(0)->addData(time ,-1.0*adata(1));
+    data = rotation_matrix * adata;
+    ui->qcustomplot3->graph(0)->addData(time , 1.0*data(0));
+    ui->qcustomplot4->graph(0)->addData(time ,1.0*data(1));
     ui->qcustomplot3->graph(0)->setPen(pen);
     ui->qcustomplot4->graph(0)->setPen(pen);
 }
@@ -705,15 +709,31 @@ void MainWindow::model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
 
     for(unsigned int i=0;i<model_state.name.size();i++ ){
         if(model_state.name[i].compare("payload")==0){
+
+
+            //rotation_matrix
+
+            tf::Quaternion q(
+                        model_state.pose[i].orientation.x,
+                        model_state.pose[i].orientation.y,
+                        model_state.pose[i].orientation.z,
+                        model_state.pose[i].orientation.w
+                        );
+            double r,p,y;
+            tf::Matrix3x3(q).getRPY(r,p,y);
+            rotation_matrix<< cos(y), -sin(y),0,
+                              sin(y), cos(y),0,
+                                0,         0,   1;
+
             //            desired_curve_data.push_back(QCPCurveData(count ,model_state.pose[i].position.x,  model_state.pose[i].position.y ));
             //            desired_curve->data()->set(desired_curve_data,true);
 
             //            payload_vel.x  = model_state.twist[i].linear.x;
             //            payload_vel.y  = model_state.twist[i].linear.y;
             //            payload_vel.z  = model_state.twist[i].linear.z;
-            //            payload_pose.x = model_state.pose[i].position.x;
-            //            payload_pose.y = model_state.pose[i].position.y;
-            //            payload_pose.z = model_state.pose[i].position.z;
+//                        payload_pose.x = model_state.pose[i].position.x;
+//                        payload_pose.y = model_state.pose[i].position.y;
+//                        payload_pose.z = model_state.pose[i].position.z;
             //            point.x = payload_pose.x;
             //            point.y = payload_pose.y;
             //            point.z = payload_pose.z;

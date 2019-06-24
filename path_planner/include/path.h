@@ -39,8 +39,15 @@ class Path {
     pubPath = n.advertise<nav_msgs::Path>(pathTopic, 1);
     pubPathNodes = n.advertise<visualization_msgs::MarkerArray>(pathNodesTopic, 1);
     pubPathVehicles = n.advertise<visualization_msgs::MarkerArray>(pathVehicleTopic, 1);
-
+    pubvehicletext  = n.advertise<visualization_msgs::MarkerArray>("/vehicle_text",1);
     // CONFIGURE THE CONTAINER
+    pubpayload = n.advertise<visualization_msgs::MarkerArray>("/payload_marker",1);
+    publeaderuav = n.advertise<visualization_msgs::MarkerArray>("/leader_uav",1);
+    pubfolloweruav = n.advertise<visualization_msgs::MarkerArray>("follower_uav",1);
+
+    publeaderuav_text = n.advertise<visualization_msgs::MarkerArray>("leader_uav_text",1);
+    pubfolloweruav_text = n.advertise<visualization_msgs::MarkerArray>("follower_uav_text",1);
+
     path.header.frame_id = "path";
   }
 
@@ -75,6 +82,10 @@ class Path {
      \param i a parameter for counting the number of nodes
   */
   void addVehicle(const Node3D& node, int i);
+  void payload(double x , double y, int i);
+  void vehicle_text(double x , double y, int i);
+  void leader_uav(double x , double y, int i);
+  void follower_uav(double x , double y , int i);
 
   // ______________
   // PUBLISH METHODS
@@ -86,7 +97,17 @@ class Path {
   /// Publishes the nodes of the path
   void publishPathNodes() { pubPathNodes.publish(pathNodes); }
   /// Publishes the vehicle along the path
-  void publishPathVehicles() { pubPathVehicles.publish(pathVehicles); }
+  void publishPathVehicles() {
+                                pubPathVehicles.publish(pathVehicles);
+                                pubvehicletext.publish(pathVehicletexts);
+                                pubpayload.publish(pathpayloads);
+                                publeaderuav.publish(pathleaderuav);
+                                pubfolloweruav.publish(pathfolloweruav);
+                                publeaderuav_text.publish(pathleaderuav_text);
+                                pubfolloweruav_text.publish(pathfolloweruav_text);
+                             }
+
+
 
  private:
   /// A handle to the ROS node
@@ -98,11 +119,35 @@ class Path {
   /// Publisher for the vehicle along the path
   ros::Publisher pubPathVehicles;
   /// Path data structure for visualization
+  ///
+  ros::Publisher publeaderuav;
+  ros::Publisher pubfolloweruav;
+  ros::Publisher pubpayload;
+  ros::Publisher pubvehicletext;
+  ros::Publisher publeaderuav_text;
+  ros::Publisher pubfolloweruav_text;
+
+  ///
+  /// \brief path
+  ///
+
   nav_msgs::Path path;
   /// Nodes data structure for visualization
   visualization_msgs::MarkerArray pathNodes;
   /// Vehicle data structure for visualization
   visualization_msgs::MarkerArray pathVehicles;
+  visualization_msgs::MarkerArray pathVehicletexts;
+  visualization_msgs::MarkerArray pathpayloads;
+  visualization_msgs::MarkerArray pathleaderuav;
+  visualization_msgs::MarkerArray pathfolloweruav;
+
+  visualization_msgs::MarkerArray pathleaderuav_text;
+  visualization_msgs::MarkerArray pathfolloweruav_text;
+
+    geometry_msgs::Point start_point;
+    geometry_msgs::Point end_point;
+
+   geometry_msgs::Quaternion  orientaiotn;
   /// Value that indicates that the path is smoothed/post processed
   bool smoothed = false;
 };

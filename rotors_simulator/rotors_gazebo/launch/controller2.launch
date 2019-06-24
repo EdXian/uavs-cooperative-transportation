@@ -30,8 +30,8 @@
 
 <node
     pkg="offb"
-    type="geo"
-    name="geo"
+    type="geo_plan"
+    name="geo_plan"
     output="screen">
 </node>
 

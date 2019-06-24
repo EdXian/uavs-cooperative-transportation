@@ -13,7 +13,6 @@
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
-//#include < geometry_msgs/PoseWithCovarianceStamped.h>
 #include <qcustomplot.h>
 #include <QString>
 #include <qptrajectory.h>
@@ -46,6 +45,7 @@ private:
     void map_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg);
     void spath_cb(const nav_msgs::Path::ConstPtr &msg);
     void plot_init();
+    void plot_vehicle();
     Ui::MainWindow *ui;
     QCPItemText *start_text;
     QCPItemText *end_text;

@@ -8,6 +8,7 @@
 #include "ros/callback_queue.h"
 #include "ros/subscribe_options.h"
 #include "nav_msgs/OccupancyGrid.h"
+#define obstacle_generate 0
 namespace gazebo
 {
 class Factory : public WorldPlugin
@@ -76,51 +77,55 @@ private: void map_cb(const nav_msgs::OccupancyGrid::ConstPtr& msg){
       }
       for(unsigned int i=0;i< obstacle_map.info.height;i++){
           for(unsigned int j=0;j<obstacle_map.info.width;j++){
-              std::cout <<  bit_map[j][i] ;
+              //std::cout <<  bit_map[j][i] ;
           }
-          std::cout << std::endl;
+         // std::cout << std::endl;
       }
   }
 
     //create obstacle
+#if obstacle_generate
+  for(unsigned int i=0;i<obstacle_map.info.width;i++){
 
-    for(unsigned int i=0;i<obstacle_map.info.width;i++){
+      for(unsigned int j=0;j< obstacle_map.info.height ;j++){
+          if(bit_map[i][j]){
+              sdf::SDF sphereSDF;
+              char a[50];
+              char b[50];
+              sprintf(a , "<pose>%d %d %d 0 0 0</pose>", i,j,0.75);
+              std::string pose_str = std::string(a);
 
-        for(unsigned int j=0;j< obstacle_map.info.height ;j++){
-            if(bit_map[i][j]){
-                sdf::SDF sphereSDF;
-                char a[50];
-                char b[50];
-                sprintf(a , "<pose>%d %d %d 0 0 0</pose>", i,j,0.75);
-                std::string pose_str = std::string(a);
+              std::string sdf_str(  "<sdf version ='1.4'>\
+                                  <model name ='sphere'> \
+                      <static>true</static>"+
+                                  pose_str+
+                                 "<link name ='link'>\
+                                   <pose>0 0 0 0 0 0</pose>\
+                                   <visual name ='visual'>\
+                                     <geometry>\
+                                       <box> <size>1.0 1.0 1.5</size></box>\
+                                     </geometry>\
+                                   </visual>\
+                                 </link>\
+                               </model>\
+                             </sdf>");
+              sphereSDF.SetFromString(sdf_str);
 
-                std::string sdf_str(  "<sdf version ='1.4'>\
-                                    <model name ='sphere'> \
-                        <static>true</static>"+
-                                    pose_str+
-                                   "<link name ='link'>\
-                                     <pose>0 0 0 0 0 0</pose>\
-                                     <visual name ='visual'>\
-                                       <geometry>\
-                                         <box> <size>1.0 1.0 1.5</size></box>\
-                                       </geometry>\
-                                     </visual>\
-                                   </link>\
-                                 </model>\
-                               </sdf>");
-                sphereSDF.SetFromString(sdf_str);
+              sdf::ElementPtr model = sphereSDF.Root()->GetElement("model");
 
-                sdf::ElementPtr model = sphereSDF.Root()->GetElement("model");
+              sprintf(b,"box_%d",i*100+j);
+              std::string model_name(b) ;
+              model->GetAttribute("name")->SetFromString(model_name);
+              //_parent->InsertModelSDF(sphereSDF);
+             // parent->InsertModelSDF(sphereSDF);
 
-                sprintf(b,"box_%d",i*100+j);
-                std::string model_name(b) ;
-                model->GetAttribute("name")->SetFromString(model_name);
-                //_parent->InsertModelSDF(sphereSDF);
-               // parent->InsertModelSDF(sphereSDF);
+          }
+      }
+}
+#endif
 
-            }
-        }
-  }
+
+
 }
 
 

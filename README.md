@@ -5,6 +5,11 @@ This is a Gazebo simulation package for ros 18.04. The package is migrated from 
 * Ubuntu 18.04 ros-melodic
 * gazebo greater than 9.0
 
+```
+sudo apt-get install ros-melodic-desktop-full ros-melodic-joy ros-melodic-octomap-ros ros-melodic-mavlink python-wstool python-catkin-tools protobuf-compiler libgoogle-glog-dev ros-melodic-control-toolbox
+```
+
+
 # Compiling
 download the package and put it into workspace and use `catkin_make` to build the package.
 If the workspace is not ready than try the following command:

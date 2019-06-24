@@ -257,9 +257,9 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
         for(int i=0 ; i < (number-1) ; i++){
                B((number+1)*2+i,0) = waypoint((number+1)*4+i);
         }
-      std::cout<< std::endl << D <<std::endl;
-      std::cout<< std::endl << A <<std::endl;
-      std::cout<< std::endl << B <<std::endl;
+//      std::cout<< std::endl << D <<std::endl;
+//      std::cout<< std::endl << A <<std::endl;
+//      std::cout<< std::endl << B <<std::endl;
 
      for(int i=0 ; i<(number*4); i++){
          for(int j=0;j<(i+1);j++){
@@ -285,7 +285,7 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
      PyTuple_SetItem(pArgs, 3, h);
      PyTuple_SetItem(pArgs, 4, A_);
      PyTuple_SetItem(pArgs, 5, B_);
-     std::cout << "here" <<std::endl;
+//     std::cout << "here" <<std::endl;
 
 
      PyObject *sol = PyObject_CallObject(lp, pArgs);
@@ -533,8 +533,8 @@ std::vector<double> qptrajectory::adjust_time(Eigen::VectorXd waypointx,Eigen::V
     jy = polynomialy.transpose()*D*polynomialy;
     //original cost function
     minimize_function = jx + jy;
-    std::cout<< std::endl << minimize_function <<std::endl;
-    std::cout<< std::endl << duration <<std::endl;
+//    std::cout<< std::endl << minimize_function <<std::endl;
+//    std::cout<< std::endl << duration <<std::endl;
 
         //"Minimum Snap Trajectory Generation and Control for Quadrotors"
         //constrainted gradient approach
@@ -611,7 +611,7 @@ std::vector<double> qptrajectory::adjust_time(Eigen::VectorXd waypointx,Eigen::V
         }
         double tempp;
         tempp = (new_minimize_function - minimize_function*number) - (h*c*temp*number);
-        std::cout<< std::endl<< tempp <<std::endl;
+       // std::cout<< std::endl<< tempp <<std::endl;
 //        std::cout<< std::endl<< new_duration <<std::endl;
 
     //obtain new polynomial for duration after compress
@@ -628,7 +628,7 @@ std::vector<double> qptrajectory::adjust_time(Eigen::VectorXd waypointx,Eigen::V
     polyy = new_polyy;
         //check if converge
         if(tempp<=1){
-            std::cout<< std::endl<< k << ":converge!" <<std::endl;
+        //    std::cout<< std::endl<< k << ":converge!" <<std::endl;
             break;
         }
     }

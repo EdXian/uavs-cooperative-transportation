@@ -22,7 +22,7 @@
 #include "geometry_msgs/WrenchStamped.h"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
-
+#include "gazebo_msgs/ModelStates.h"
 
 struct tracker_pos{
   QVector<double> x;
@@ -84,9 +84,7 @@ private:
     void traj_cb(const  geometry_msgs::Point::ConstPtr& msg  );
     void desired_traj_cb(const geometry_msgs::Point::ConstPtr& msg);
     void point_cb(const geometry_msgs::Point::ConstPtr& msg);
-    void tracker1_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    void tracker2_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    void tracker3_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+
     void acc_cb(const geometry_msgs::Point::ConstPtr& msg);
     void local_cb(const  geometry_msgs::Point::ConstPtr& msg  );
     void model_cb(const  gazebo_msgs::ModelStates::ConstPtr& msg  );
@@ -98,9 +96,10 @@ private:
     void desired_force_cb(const geometry_msgs::Point::ConstPtr& msg);
     void trigger_cb(const geometry_msgs::Point::ConstPtr& msg);
     void desired_velocity_cb(const geometry_msgs::Point::ConstPtr& msg);
-
     void vel_est_cb(const  geometry_msgs::Point::ConstPtr& msg);
     void vel_est_b_cb(const geometry_msgs::Point::ConstPtr& msg);
+
+
     //   void me_cb(const  ukf_estimate::output::ConstPtr& msg  );
     double t_max;
     double t_min;
@@ -127,7 +126,7 @@ private:
 
     geometry_msgs::Point c2_vel;
     geometry_msgs::Point c2_vel_b;
-
+    Eigen::Matrix3d rotation_matrix;
     std::vector<QCPItemLine* > arrow;
     int tick;
     double ros_time = 0;
