@@ -10,7 +10,7 @@
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <!--<arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world"/>-->
 <!--    <arg name="world_name" value="$(find rotors_gazebo)/worlds/drone_inv.world"/>-->
-    <arg name="world_name" value="$(find rotors_gazebo)/worlds/obstacle_world.world"/>
+    <arg name="world_name" value="$(find rotors_gazebo)/worlds/obstacle_world2.world"/>
 
 
 

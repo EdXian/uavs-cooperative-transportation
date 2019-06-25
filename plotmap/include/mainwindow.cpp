@@ -18,8 +18,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->pushButton,SIGNAL(clicked()),this,SLOT(click_button()));
     connect(ui->save_Button,SIGNAL(clicked()),this,SLOT(save_button()));
     connect(ui->qpsolve_Button,SIGNAL(clicked()),this,SLOT(qpsolve_button()));
+    connect(ui->publish_button, SIGNAL(clicked()), this, SLOT(traj_pub_button()) );
     Timer->start(50);
 
+}
+void MainWindow::traj_pub_button(){
+   //traj.time_from_start =0.02;
+    trajetory_pub.publish(traj);
+    ROS_WARN("trajectory has been published.");
 }
 void MainWindow::qpsolve_button2(){
     qp_curve_data.clear();
@@ -115,16 +121,39 @@ double endtime = path.poses.size() *dt;
 void MainWindow::qpsolve_button(){
     std::vector<trajectory_profile> data;
     qp_curve_data.clear();
-    data = plan.get_profile(path_vec, path_vec.size(), 0.02);
-    std::cout << "profile count" << data.size()<<std::endl;
-    for(unsigned int i=0;i< data.size();i++){
-        qp_curve_data.push_back(QCPCurveData(i,data[i].pos(0),data[i].pos(1)));
-        ui->vel_plot->graph(0)->addData(i*0.02 , data[i].vel(0));
-        ui->vel_plot->graph(1)->addData(i*0.02 , data[i].vel(1));
 
+
+    //std::cout << "start   " << path_vec[0].b_c.pos.transpose() <<std::endl;
+    if(path_vec.size()>0){
+        data = plan.get_profile(path_vec, path_vec.size(), 0.02);
     }
 
+    std::cout << "profile count" << data.size()<<std::endl;
+    for(unsigned int i=100;i< (data.size()-10);i++){
 
+        qp_curve_data.push_back(QCPCurveData(i,data[i].pos(0),data[i].pos(1)));
+
+        ui->vel_plot->graph(0)->addData(i*0.02 , data[i].vel(0));
+        ui->vel_plot->graph(1)->addData(i*0.02 , data[i].vel(1));
+        //std::cout << data[i].pos.transpose()<<std::endl;
+
+        geometry_msgs::Transform pos;
+        geometry_msgs::Twist vel,acc;
+        pos.translation.x = data[i].pos(0);
+        pos.translation.y = data[i].pos(1);
+
+        vel.linear.x = data[i].vel(0);
+        vel.linear.y = data[i].vel(1);
+
+        acc.linear.x = data[i].acc(0);
+        acc.linear.y = data[i].acc(1);
+
+        traj.transforms.push_back(pos);
+        traj.velocities.push_back(vel);
+        traj.accelerations.push_back(acc);
+    }
+
+    data.clear();
     path_curve->data()->clear();
     qp_path_curve->data()->set(qp_curve_data);
     QPen pen;
@@ -139,7 +168,7 @@ void MainWindow::ros_sub_pub_init(){
     spath_sub = nh.subscribe("/sPath",10 , &MainWindow::spath_cb,this );
     start_pose_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/initialpose" ,1 );
     end_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal" ,1 );
-    traj_pub = nh.advertise<nav_msgs::Path>("/obstacle_avoidance_path",1);
+    trajetory_pub = nh.advertise<trajectory_msgs::MultiDOFJointTrajectoryPoint>("/obstacle_avoidance_path",1);
 }
 void MainWindow::plot_vehicle(){
 
@@ -156,6 +185,7 @@ void MainWindow::plot_init(){
 
     ui->plot->setOpenGl(true,4);
     start_text  = new QCPItemText(ui->plot);
+    origin_text = new QCPItemText(ui->plot);
     end_text = new QCPItemText(ui->plot);
     path_curve = new QCPCurve(ui->plot->xAxis , ui->plot->yAxis);
     qp_path_curve = new QCPCurve(ui->plot->xAxis,ui->plot->yAxis);
@@ -282,7 +312,6 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
 
             if((i+1) <path.poses.size()  && (i%3==0) ){
 
-
             QCPItemLine   *line;
             line = new  QCPItemLine(ui->plot);
 
@@ -322,7 +351,6 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
                 trajectory_profile start, end;
                 start.pos << tmp[k].pose.position.x,tmp[k].pose.position.y,0;
                 end.pos << tmp[k+1].pose.position.x,tmp[k+1].pose.position.y,0;
-
                 double dist = (start.pos - end.pos).norm();
                 path_vec.push_back(segments(start,end,1));
             }
@@ -336,6 +364,13 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
         start_text->setPositionAlignment(Qt::AlignHCenter);
         start_text->setText("Start");
         start_text->setFont(QFont(font().family(), 20));
+
+
+        origin_text->position->setCoords(0,0);
+        origin_text->setPositionAlignment(Qt::AlignHCenter);
+        origin_text->setText("Origin");
+        origin_text->setFont(QFont(font().family(), 20));
+
 
         end_text->position->setCoords(path.poses[end_id].pose.position.x-1 , path.poses[end_id].pose.position.y);
         end_text->setPositionAlignment(Qt::AlignHCenter|Qt::AlignLeft);

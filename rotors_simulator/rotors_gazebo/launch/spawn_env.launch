@@ -1,0 +1,31 @@
+<!-- for trajectory tracking -->
+<launch>
+  <arg name="world_name" default="basic"/>
+  <arg name="enable_logging" default="false"/>
+  <arg name="enable_ground_truth" default="true"/>
+  <arg name="mav_name" default="firefly" />
+
+  <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find rotors_gazebo)/models"/>
+  <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <!--<arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world"/>-->
+<!--    <arg name="world_name" value="$(find rotors_gazebo)/worlds/drone_inv.world"/>-->
+    <arg name="world_name" value="$(find rotors_gazebo)/worlds/obstacle_world2.world"/>
+
+
+
+<!-- <arg name="debug" value="true"/> -->
+    <arg name="paused" value="false"/>
+    <!-- <arg name="gui" value="false"/> -->
+  </include>
+
+
+
+
+
+
+
+
+
+
+</launch>

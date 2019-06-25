@@ -18,6 +18,10 @@
 #include <qptrajectory.h>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
+#include <geometry_msgs/Transform.h>
+#include <geometry_msgs/Twist.h>
 namespace Ui {
 class MainWindow;
 }
@@ -30,10 +34,12 @@ public:
     ros::NodeHandle nh;
     ros::Publisher start_pose_pub;
     ros::Publisher end_pose_pub;
+    ros::Publisher trajetory_pub;
+   // ros::Publisher traj_pub;
+
 
     ros::Subscriber map_sub;
     ros::Subscriber spath_sub;
-    ros::Publisher traj_pub;
     QTimer *Timer;
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -49,6 +55,8 @@ private:
     Ui::MainWindow *ui;
     QCPItemText *start_text;
     QCPItemText *end_text;
+    QCPItemText *origin_text;
+
 
     QCPCurve *qp_path_curve;
     QVector<QCPCurveData> qp_curve_data;
@@ -58,14 +66,16 @@ private:
 
     qptrajectory plan;
     path_def path_vec;
-      nav_msgs::Path path;
+    nav_msgs::Path path;
     nav_msgs::Path obstacle_path;
+    trajectory_msgs::MultiDOFJointTrajectoryPoint traj;
 private slots:
     void update();
     void click_button();
     void save_button();
     void qpsolve_button();
     void qpsolve_button2();
+    void traj_pub_button();
 };
 
 #endif // MAINWINDOW_H

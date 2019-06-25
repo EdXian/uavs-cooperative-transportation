@@ -229,10 +229,17 @@ MainWindow::MainWindow(QWidget *parent) :
      ui->qcustomplot4->addGraph();
      ui->qcustomplot3->setInteractions(QCP::iRangeZoom | QCP::iSelectAxes | QCP::iRangeDrag  | QCP::iSelectPlottables);
      ui->qcustomplot4->setInteractions(QCP::iRangeZoom | QCP::iSelectAxes | QCP::iRangeDrag  | QCP::iSelectPlottables);
-     ui->qcustomplot3->graph(0)->setName(QString("Ground truth"));
+     ui->qcustomplot3->graph(0)->setName(QString("force x \n payload frame"));
      ui->qcustomplot3->graph(1)->setName(QString("Estimation force x"));
-     ui->qcustomplot4->graph(0)->setName(QString("Ground truth"));
+     ui->qcustomplot4->graph(0)->setName(QString("force y \n payload frame"));
      ui->qcustomplot4->graph(1)->setName(QString("Estimation force y"));
+
+    ui->qcustomplot4->graph(1)->setVisible(false);
+     ui->qcustomplot3->graph(1)->setVisible(false);
+    ui->qcustomplot3->graph(1)->removeFromLegend();
+    ui->qcustomplot4->graph(1)->removeFromLegend();
+
+
 
      ui->customplot4->legend->setVisible(true);
      ui->customplot4->legend->setFont(tfont);
@@ -348,10 +355,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->qcustomplot7->axisRect()->setupFullAxesBox(true);
     ui->qcustomplot6->legend->setFont(tfont);
     ui->qcustomplot7->legend->setFont(tfont);
-
-
-
-
     ui->qcustomplot5->xAxis->setRange(0,125);
 
     ui->qcustomplot5->yAxis->setRange(-3,3);
@@ -721,8 +724,8 @@ void MainWindow::model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
                         );
             double r,p,y;
             tf::Matrix3x3(q).getRPY(r,p,y);
-            rotation_matrix<< cos(y), -sin(y),0,
-                              sin(y), cos(y),0,
+            rotation_matrix<< cos(y), sin(y),0,
+                              -sin(y), cos(y),0,
                                 0,         0,   1;
 
             //            desired_curve_data.push_back(QCPCurveData(count ,model_state.pose[i].position.x,  model_state.pose[i].position.y ));

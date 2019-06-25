@@ -103,7 +103,7 @@ private: void map_cb(const nav_msgs::OccupancyGrid::ConstPtr& msg){
                                    <pose>0 0 0 0 0 0</pose>\
                                    <visual name ='visual'>\
                                      <geometry>\
-                                       <box> <size>1.0 1.0 1.5</size></box>\
+                                       <box> <size>1.0 1.0 3.0</size></box>\
                                      </geometry>\
                                    </visual>\
                                  </link>\
@@ -117,7 +117,7 @@ private: void map_cb(const nav_msgs::OccupancyGrid::ConstPtr& msg){
               std::string model_name(b) ;
               model->GetAttribute("name")->SetFromString(model_name);
               //_parent->InsertModelSDF(sphereSDF);
-             // parent->InsertModelSDF(sphereSDF);
+              parent->InsertModelSDF(sphereSDF);
 
           }
       }

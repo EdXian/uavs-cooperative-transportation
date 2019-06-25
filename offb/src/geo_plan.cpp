@@ -20,10 +20,11 @@
 #include <geometry_msgs/WrenchStamped.h>
 #include <qptrajectory.h>
 #include <tf2/transform_datatypes.h>
-#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/MultiDOFJointTrajectoryPoint.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
+
 #define normal
 #define PI 3.14159
 gazebo_msgs::ModelStates model_states;
@@ -64,7 +65,7 @@ geometry_msgs::Point desired_force;
 geometry_msgs::Point desired_velocity;
 geometry_msgs::Point feedforward;
 double tt;
-trajectory_msgs::MultiDOFJointTrajectory traj;
+//trajectory_msgs::MultiDOFJointTrajectory traj;
 trajectory_msgs::MultiDOFJointTrajectoryPoint point;
 
 nav_msgs::Path  path;
@@ -291,37 +292,19 @@ qptrajectory plan;
 
 path_def path_vec;
 
-std::vector<trajectory_profile> qp_planner(nav_msgs::Path tmp){
 
-    std::vector<trajectory_profile> profile_data;
-    for(unsigned int k=0;k<tmp.poses.size();k++){
-        if( (k< tmp.poses.size()-1)   ){
-            trajectory_profile start, end;
-            start.pos << tmp.poses[k].pose.position.x,tmp.poses[k].pose.position.y,0;
-            end.pos << tmp.poses[k+1].pose.position.x,tmp.poses[k+1].pose.position.y,0;
-//            std::cout <<" ==== " <<k <<" ==== " <<std::endl;
-//            std::cout << start.pos.transpose()<<std::endl;
-            path_vec.push_back(segments(start,end,1));
-        }
-    }
-    ROS_WARN("start planning");
-    profile_data = plan.get_profile(path_vec, path_vec.size(), 0.02);
-    return profile_data;
-}
+nav_msgs::Path inv_path;
 void path_cb(const nav_msgs::Path::ConstPtr& msg){
+}
 
-    nav_msgs::Path inv_path;
-    inv_path = *msg;
+trajectory_msgs::MultiDOFJointTrajectoryPoint traj;
 
-    path.poses.clear();
-    path.poses.resize(inv_path.poses.size());
-    if(inv_path.poses.size()>0){
-        for(unsigned int i=0;i< inv_path.poses.size();i++){
-            path.poses[i] = (inv_path.poses[inv_path.poses.size()-1-i]);
-        }
+void traj_cb(const trajectory_msgs::MultiDOFJointTrajectoryPoint::ConstPtr& msg ){
+    traj = *msg;
+    if(traj.transforms.size()>0){
         planner_ready = true;
+        ROS_WARN("poses size :  %d",traj.transforms.size());
     }
-    ROS_WARN("poses size %d",inv_path.poses.size());
 }
 
 int main(int argc, char **argv)
@@ -340,9 +323,12 @@ int main(int argc, char **argv)
   ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>
           ("/follower_ukf/force_estimate", 3, est_force_cb);
   ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1", 2, imu1_cb);
-  ros::Subscriber path_sub = nh.subscribe("/sPath" , 10, path_cb);
+  //ros::Subscriber path_sub = nh.subscribe("/sPath" , 1, path_cb);
   ros::Subscriber point2_sub = nh.subscribe("pointpc2",2,point2_cb);
   ros::Subscriber point_sub = nh.subscribe("pointvc2",2,point_cb);
+  ros::Subscriber traj_sub = nh.subscribe("/obstacle_avoidance_path",1,traj_cb);
+
+
   geometry_msgs::PoseStamped force;
 
   ros::Rate loop_rate(50.0);
@@ -362,45 +348,54 @@ int main(int argc, char **argv)
    desired_pose.pose.position.z = 1.3;
 
 std::vector<trajectory_profile> data;
+
+
     while(ros::ok()){
 
     if(planner_ready){
-        if(path.poses.size()>0){
+        data.clear();
+        if(traj.transforms.size()>0)
+        {
+            data.resize(traj.transforms.size());
+            for(unsigned int i=0; i<traj.transforms.size();i++){
 
-            for(unsigned int k=0;k<path.poses.size();k++){
-                if( (k< path.poses.size()-1)   ){
-                    trajectory_profile start, end;
-                    start.pos << path.poses[k].pose.position.x,path.poses[k].pose.position.y,0;
-                    end.pos << path.poses[k+1].pose.position.x,path.poses[k+1].pose.position.y,0;
-                    path_vec.push_back(segments(start,end,1));
-                }
+                data[i].pos << traj.transforms[i].translation.x, traj.transforms[i].translation.y, 0;
+                data[i].vel << traj.velocities[i].linear.x, traj.velocities[i].linear.y, 0 ;
+//                data[i].acc << traj.accelerations[i].linear.x, traj.accelerations[i].linear.y, 0;
+
+
+                data[i].acc <<   0,0,0;
+                data[i].jerk << 0, 0, 0;
+                std::cout << i <<std::endl;
+                std::cout << data[i].vel.transpose()<<std::endl;
             }
-            ROS_WARN("start planning");
-            data = plan.get_profile(path_vec, path_vec.size(), 0.02);
-            planner_ready = false;
         }
+
+        planner_ready = false;
     }
+
+
 
     nh.getParam("/start",flag);
 
+    if(flag == false || (tick>data.size())&& (data.size() == 0)){
 
-     if(flag == false || (tick>data.size())&& (data.size() == 0)){
-               //do position control
-               Eigen::Vector3d p,v,a;
-               p<<desired_pose.pose.position.x,desired_pose.pose.position.y,desired_pose.pose.position.z;
-               v<<0.0,0.0,0.0;
-               a<<0.0,0.0,0.0;
-                nh.setParam("/start",false);
+       //do position control
+       Eigen::Vector3d p,v,a;
+       p<<desired_pose.pose.position.x,desired_pose.pose.position.y,desired_pose.pose.position.z;
+       v<<0.0,0.0,0.0;
+       a<<0.0,0.0,0.0;
+        nh.setParam("/start",false);
 
-                tick = 0;
+        tick = 0;
 
-                force.pose.position.x = 3*(desired_pose.pose.position.x - pose(0))+1*(0-vel(0));
-                force.pose.position.y = 3*(desired_pose.pose.position.y - pose(1))+1*(0-vel(1));
-                force.pose.position.z = 3*(desired_pose.pose.position.z - pose(2))+1*(0-vel(2))+0.5*9.8*0.5;
+        force.pose.position.x = 3*(desired_pose.pose.position.x - pose(0))+1*(0-vel(0));
+        force.pose.position.y = 3*(desired_pose.pose.position.y - pose(1))+1*(0-vel(1));
+        force.pose.position.z = 3*(desired_pose.pose.position.z - pose(2))+1*(0-vel(2))+0.5*9.8*0.5;
 
 
-           }else{
-
+     }else{
+        // running the proposed controller
        vir_x = data[tick].pos(0);
        vir_y = data[tick].pos(1);
        record_pose.x = vir_x;
@@ -463,8 +458,8 @@ std::vector<trajectory_profile> data;
         double mp=0.5;
        // std::cout << "ok"<<std::endl;
 
-        tmp <<  3.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + nonlinearterm(0) + vd_dot ,
-             3.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,
+        tmp <<  2.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + 0.0*(nonlinearterm(0) + vd_dot) ,
+             2.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,
                                                   0;
 
         feedforward.x =nonlinearterm(0);

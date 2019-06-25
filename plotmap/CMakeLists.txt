@@ -73,7 +73,7 @@ target_link_libraries(plotmap
                    ${Qt5Core_LIBRARIES}
                     Qt5::PrintSupport
                     ${PYTHON_LIBRARIES}
-                    qptrajectory
+                    qpsolver
                     )
  #target_link_libraries(subtest ${catkin_LIBRARIES})
 

@@ -7,6 +7,9 @@ This is a Gazebo simulation package for ros 18.04. The package is migrated from 
 
 ```
 sudo apt-get install ros-melodic-desktop-full ros-melodic-joy ros-melodic-octomap-ros ros-melodic-mavlink python-wstool python-catkin-tools protobuf-compiler libgoogle-glog-dev ros-melodic-control-toolbox
+sudo apt-get install python-cvxopt
+//or
+sudo pip install cvxopt
 ```
 
 

@@ -62,6 +62,7 @@
       <direction>-0.5 0.1 -0.9</direction>
     </light>
    <plugin name='obstacle' filename='libobstacle_plugin.so'/>
+
   <plugin name='ros_interface_plugin' filename='librotors_gazebo_ros_interface_plugin.so'/>
   <plugin name="model_push" filename="libpayload_joint_plugin.so"/>
 

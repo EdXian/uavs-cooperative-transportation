@@ -128,6 +128,19 @@
      </widget>
     </widget>
    </widget>
+   <widget class="QPushButton" name="publish_button">
+    <property name="geometry">
+     <rect>
+      <x>1040</x>
+      <y>240</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Publish</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">

@@ -237,8 +237,6 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
          0 ,  -1 ,   0  ,  0  ;
 
       A.block<2,4>(0,0) = Ai;
-//          std::cout << endpoint_array4(duration(0)) << std::endl;
-
       for(int i=0 ; i < number ; i++){
               A.block<2,4>(2+i*2,i*4) = endpoint_array4(duration(i));
       }
@@ -247,8 +245,6 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
               A.block<2,4>(2*(i+1),4*(i+1)) = Af;
               A((number+1)*2+i,4*(i+1)) = 1;
       }
-
-       //B = waypoint;
         for(int i=0 ; i < (number+1) ; i++){
                B(i*2,0) = waypoint(i*4);
                B(i*2+1,0) = waypoint(i*4+1);
@@ -257,14 +253,9 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
         for(int i=0 ; i < (number-1) ; i++){
                B((number+1)*2+i,0) = waypoint((number+1)*4+i);
         }
-//      std::cout<< std::endl << D <<std::endl;
-//      std::cout<< std::endl << A <<std::endl;
-//      std::cout<< std::endl << B <<std::endl;
-
      for(int i=0 ; i<(number*4); i++){
          for(int j=0;j<(i+1);j++){
              MAT_BUFD(Q)[i*(number*4)+j] = D(j,i)   ;
-             //solver.set_d(i, j, D(i,j));
          }
      }
 
@@ -273,7 +264,6 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
              MAT_BUFD(A_)[i*((number+1)*2+(number-1))+j] = A(j,i)   ;
          }
      }
-
      for(int i=0;i<((number+1)*2+(number-1));i++){
             //solver.set_b(i,B(i,0));
            MAT_BUFD(B_)[i] = B(i,0)   ;
@@ -285,9 +275,6 @@ PyObject *lp = PyObject_GetAttrString(solvers, "qp");
      PyTuple_SetItem(pArgs, 3, h);
      PyTuple_SetItem(pArgs, 4, A_);
      PyTuple_SetItem(pArgs, 5, B_);
-//     std::cout << "here" <<std::endl;
-
-
      PyObject *sol = PyObject_CallObject(lp, pArgs);
 
      if (!sol) {
@@ -698,8 +685,8 @@ std::vector<trajectory_profile> qptrajectory::get_profile(std::vector<segments> 
             duration(i)=seg[i].time_interval;
             total_t+=seg[i].time_interval;
     }
-    polyx = qpsolve8(waypointx , number , duration);
-    polyy = qpsolve8(waypointy , number , duration);
+    polyx = qpsolve4(waypointx , number , duration);
+    polyy = qpsolve4(waypointy , number , duration);
     //polyx, polyy is vector of all segment's coefficient
 
 //    poly = compress_time(waypointx,waypointy,number,duration,polyx,polyy);
@@ -711,33 +698,12 @@ std::vector<trajectory_profile> qptrajectory::get_profile(std::vector<segments> 
     //polyx_2, polyy_2 is vector of each segment
     //normal eight, four order
     for(unsigned int i=0;i<number ;i++){
-        for(unsigned int j=0; j<8;j++){
-            polyx_2[i].push_back( polyx[i*8+j]);
-            polyy_2[i].push_back( polyy[i*8+j]);
+        for(unsigned int j=0; j<4;j++){
+            polyx_2[i].push_back( polyx[i*4+j]);
+            polyy_2[i].push_back( polyy[i*4+j]);
         }
     }
-//    for(unsigned int i=0;i<number ;i++){
-//        for(unsigned int j=0; j<4;j++){
-//            polyx_2[i].push_back( polyx[i*4+j]);
-//            polyy_2[i].push_back( polyy[i*4+j]);
-//        }
-//    }
 
-    //compress and adjust time
-//    for(unsigned int i=0;i<number ;i++){
-//        for(unsigned int j=0; j<8;j++){
-//            polyx_2[i].push_back(poly[i*8+j]);
-//        }
-//    }
-
-//    for(unsigned int i=0;i<number ;i++){
-//        for(unsigned int j=0; j<8;j++){
-//            polyy_2[i].push_back(poly[number*8+i*8+j]);
-//        }
-//    }
-//    for(unsigned int i=0;i<number ;i++){
-//            duration(i) = poly[number*8*2+i];
-//    }
     std::cout << duration <<std::endl;
 
     double t=0.0 ;
