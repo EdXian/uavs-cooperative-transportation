@@ -203,6 +203,7 @@ add_library(
 #add_executable(thrust src/thrust.cpp)
 #add_executable(apply_wrench src/apply_wrench.cpp)
 add_executable(geo src/geo.cpp)
+add_executable(mocap src/mocap.cpp)
 add_executable(geo_plan src/geo_plan.cpp)
 add_executable(geo2 src/geo2.cpp)
 add_executable(obstacle src/obstacle.cpp)
@@ -249,6 +250,11 @@ add_executable(obstacle src/obstacle.cpp)
 #   )
 target_link_libraries(
     rls
+     ${catkin_LIBRARIES}
+
+)
+target_link_libraries(
+    mocap
      ${catkin_LIBRARIES}
 
 )

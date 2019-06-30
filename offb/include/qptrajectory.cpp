@@ -685,8 +685,8 @@ std::vector<trajectory_profile> qptrajectory::get_profile(std::vector<segments> 
             duration(i)=seg[i].time_interval;
             total_t+=seg[i].time_interval;
     }
-    polyx = qpsolve4(waypointx , number , duration);
-    polyy = qpsolve4(waypointy , number , duration);
+    polyx = qpsolve8(waypointx , number , duration);
+    polyy = qpsolve8(waypointy , number , duration);
     //polyx, polyy is vector of all segment's coefficient
 
 //    poly = compress_time(waypointx,waypointy,number,duration,polyx,polyy);
@@ -698,9 +698,9 @@ std::vector<trajectory_profile> qptrajectory::get_profile(std::vector<segments> 
     //polyx_2, polyy_2 is vector of each segment
     //normal eight, four order
     for(unsigned int i=0;i<number ;i++){
-        for(unsigned int j=0; j<4;j++){
-            polyx_2[i].push_back( polyx[i*4+j]);
-            polyy_2[i].push_back( polyy[i*4+j]);
+        for(unsigned int j=0; j<8;j++){
+            polyx_2[i].push_back( polyx[i*8+j]);
+            polyy_2[i].push_back( polyy[i*8+j]);
         }
     }
 

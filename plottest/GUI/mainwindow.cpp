@@ -234,10 +234,10 @@ MainWindow::MainWindow(QWidget *parent) :
      ui->qcustomplot4->graph(0)->setName(QString("force y \n payload frame"));
      ui->qcustomplot4->graph(1)->setName(QString("Estimation force y"));
 
-    ui->qcustomplot4->graph(1)->setVisible(false);
-     ui->qcustomplot3->graph(1)->setVisible(false);
-    ui->qcustomplot3->graph(1)->removeFromLegend();
-    ui->qcustomplot4->graph(1)->removeFromLegend();
+//    ui->qcustomplot4->graph(1)->setVisible(false);
+//     ui->qcustomplot3->graph(1)->setVisible(false);
+//    ui->qcustomplot3->graph(1)->removeFromLegend();
+//    ui->qcustomplot4->graph(1)->removeFromLegend();
 
 
 
@@ -323,6 +323,41 @@ MainWindow::MainWindow(QWidget *parent) :
       ui->qcustomplot9->axisRect()->setupFullAxesBox(true);
       ui->qcustomplot8->legend->setFont(tfont);
       ui->qcustomplot9->legend->setFont(tfont);
+
+
+      ui->qcustomplot10->setInteractions(QCP::iRangeZoom | QCP::iSelectAxes | QCP::iRangeDrag  | QCP::iSelectPlottables);
+      ui->qcustomplot10->addGraph();
+
+      ui->qcustomplot11->setInteractions(QCP::iRangeZoom | QCP::iSelectAxes | QCP::iRangeDrag  | QCP::iSelectPlottables);
+      ui->qcustomplot11->addGraph();
+
+
+      ui->qcustomplot10->graph(0)->setName("vc2_x \n(payload frame)");
+      ui->qcustomplot11->graph(0)->setName("vc2_y \n(payload frame)");
+      ui->qcustomplot10->legend->setVisible(true);
+      ui->qcustomplot11->legend->setVisible(true);
+
+      ui->qcustomplot10->xAxis->setRange(0,125);
+      ui->qcustomplot11->xAxis->setRange(0,125);
+      ui->qcustomplot10->yAxis->setRange(-5,5);
+      ui->qcustomplot11->yAxis->setRange(-5,5);
+      ui->qcustomplot10->xAxis->setTickLabelFont(tfont);
+      ui->qcustomplot11->xAxis->setTickLabelFont(tfont);
+      ui->qcustomplot10->yAxis->setTickLabelFont(tfont);
+      ui->qcustomplot11->yAxis->setTickLabelFont(tfont);
+      ui->qcustomplot10->xAxis->setLabel("time");
+      ui->qcustomplot10->yAxis->setLabel("Vel (m/s)");
+      ui->qcustomplot11->xAxis->setLabel("time");
+      ui->qcustomplot11->yAxis->setLabel("Vel (rad/s)");
+      ui->qcustomplot11->yAxis->setLabelFont(tfont);
+      ui->qcustomplot11->xAxis->setLabelFont(tfont);
+      ui->qcustomplot10->yAxis->setLabelFont(tfont);
+      ui->qcustomplot10->xAxis->setLabelFont(tfont);
+      ui->qcustomplot10->axisRect()->setupFullAxesBox(true);
+      ui->qcustomplot11->axisRect()->setupFullAxesBox(true);
+      ui->qcustomplot10->legend->setFont(tfont);
+      ui->qcustomplot11->legend->setFont(tfont);
+
 
     ui->qcustomplot5->graph(0)->setName(QString("Estimate total force "));
     ui->qcustomplot5->graph(1)->setName(QString("trigger"));
@@ -466,8 +501,8 @@ void MainWindow::force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
 
     adata = payload_link1_rotation*data;
     data = rotation_matrix * adata;
-    ui->qcustomplot3->graph(0)->addData(time , 1.0*data(0));
-    ui->qcustomplot4->graph(0)->addData(time ,1.0*data(1));
+    ui->qcustomplot3->graph(0)->addData(time , data(0));
+    ui->qcustomplot4->graph(0)->addData(time ,data(1));
     ui->qcustomplot3->graph(0)->setPen(pen);
     ui->qcustomplot4->graph(0)->setPen(pen);
 }
@@ -476,8 +511,14 @@ void MainWindow::estimate_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     pen.setColor(Qt::red);
     pen.setWidth(2);
 
-    ui->qcustomplot3->graph(1)->addData(time , msg->x);
-    ui->qcustomplot4->graph(1)->addData(time ,msg->y);
+    Eigen::Vector3d f,f_;
+
+    f<<msg->x,msg->y,msg->z;
+    f_=rotation_matrix*f ;
+
+
+    ui->qcustomplot3->graph(1)->addData(time , -1.0*f_(0));
+    ui->qcustomplot4->graph(1)->addData(time , -1.0*f_(1));
 
      ui->qcustomplot3->graph(1)->setPen(pen);
      ui->qcustomplot4->graph(1)->setPen(pen);
@@ -519,12 +560,10 @@ void MainWindow::desired_velocity_cb(const geometry_msgs::Point::ConstPtr &msg){
     QPen pen;
     pen.setColor(Qt::red);
     pen.setWidth(5);
-
-
     ui->qcustomplot6->graph(0)->addData(time , msg->x);   // body linear x
     ui->qcustomplot7->graph(0)->addData(time ,msg->y);    // body angular y
-     ui->qcustomplot6->graph(0)->setPen(pen);
-     ui->qcustomplot7->graph(0)->setPen(pen);
+    ui->qcustomplot6->graph(0)->setPen(pen);
+    ui->qcustomplot7->graph(0)->setPen(pen);
 
 }
 void MainWindow::desired_force_cb(const geometry_msgs::Point::ConstPtr &msg){
@@ -581,8 +620,12 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
 
     for(unsigned int i=0;i< link_state.name.size();i++ ){
         if(link_state.name[i].compare("payload::payload_rec_g_box")==0){
-            ui->qcustomplot8->graph(0)->addData(time, c2_vel.x  );
-            ui->qcustomplot9->graph(0)->addData(time, c2_vel.y);
+
+            Eigen::Vector3d c2_ , c2;
+            c2<<c2_vel.x , c2_vel.y, 0;
+            c2_ = rotation_matrix* c2;
+            ui->qcustomplot8->graph(0)->addData(time, c2_(0)  );
+            ui->qcustomplot9->graph(0)->addData(time, c2_(1));
             QPen ppen;
             ppen.setColor(Qt::blue);
             ppen.setWidth(4);
@@ -595,8 +638,27 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
              ppen.setStyle(Qt::DotLine);
              ui->qcustomplot8->graph(1)->setPen(ppen);
              ui->qcustomplot9->graph(1)->setPen(ppen);
-             ui->qcustomplot8->graph(1)->addData(time, link_state.twist[i].linear.x);
-             ui->qcustomplot9->graph(1)->addData(time, link_state.twist[i].linear.y);
+
+
+             Eigen::Vector3d linear,linear_;
+             linear<<link_state.twist[i].linear.x,link_state.twist[i].linear.y,0;
+                linear_  =  rotation_matrix*linear ;
+             ui->qcustomplot8->graph(1)->addData(time, linear_(0));
+             ui->qcustomplot9->graph(1)->addData(time, linear_(1));
+
+             Eigen::Vector3d vc2_, vc2_b;
+             vc2_ << link_state.twist[i].linear.x, link_state.twist[i].linear.y, 0;
+
+              ppen.setStyle(Qt::SolidLine);
+              ppen.setColor(Qt::blue);
+             vc2_b = rotation_matrix *vc2_;
+             ui->qcustomplot10->graph(0)->setPen(ppen);
+             ui->qcustomplot11->graph(0)->setPen(ppen);
+             ui->qcustomplot10->graph(0)->addData(time, vc2_b(0));
+             ui->qcustomplot11->graph(0)->addData(time, vc2_b(1));
+
+
+
         }
         if(link_state.name[i].compare("payload::payload_link2")==0){
              double x , y, z, w;
@@ -792,6 +854,8 @@ void MainWindow::model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
     ui->qcustomplot8->replot();
     ui->qcustomplot9->replot();
 
+    ui->qcustomplot10->replot();
+    ui->qcustomplot11->replot();
 }
 void MainWindow::traj_cb(const  geometry_msgs::Point::ConstPtr& msg ){
 
@@ -844,7 +908,7 @@ void MainWindow::on_pushButton_clicked()
   QString filename = QFileDialog::getSaveFileName(0,"Save file",QDir::currentPath(),
          "png files (*.png)",
              new QString("png files (*.png)"));
-  ui->customplot->savePng(filename, 0, 0, 5,100, -1);
+  ui->customplot->savePng(filename+"0.png", 0, 0, 5,100, -1);
   ui->customplot2->savePng(filename+"1.png", 0, 0, 5,100, -1);
   ui->customplot3->savePng(filename+"2.png", 0, 0, 2,100, -1);
   ui->customplot4->savePng(filename+"4.png", 0, 0, 2,100, -1);
@@ -859,7 +923,8 @@ void MainWindow::on_pushButton_clicked()
   ui->qcustomplot7->savePng(filename+"11.png", 0, 0, 2,100, -1);
   ui->qcustomplot8->savePng(filename+"12.png", 0, 0, 2,100, -1);
   ui->qcustomplot9->savePng(filename+"13.png", 0, 0, 2,100, -1);
-
+  ui->qcustomplot10->savePng(filename+"14.png", 0, 0, 2,100, -1);
+  ui->qcustomplot11->savePng(filename+"15.png", 0, 0, 2,100, -1);
 }
 
 void MainWindow::on_pushButton_2_clicked()

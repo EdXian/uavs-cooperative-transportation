@@ -93,7 +93,9 @@ Eigen::Vector3d f;
 double l =0.18;   //the length of the cable
 double L = 0.5; // the length of the payload
 f<<msg->x , msg->y , msg->z;
- pb  =    PL    -  uav_rotation * Eigen::Vector3d(0,0,0.05);
+
+
+ pb  =    PL    -  uav_rotation * Eigen::Vector3d(0,0,0.05);// offset x from uav to connector
  pc = pb+(f/f.norm())*l;
 
 //find pc2

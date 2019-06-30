@@ -51,37 +51,6 @@ unsigned int tick=0;
 bool flag = false;
 mavros_msgs::State current_state;
 
-
-
-//void model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
-////    model_states = *msg;
-////    for(unsigned int i=0;i<model_states.name.size();i++){
-////        if(model_states.name[i].compare("payload")==0){
-//////            payload_pose.pose.position = model_states.pose[i].position;
-//////            payload_pose.pose.orientation= model_states.pose[i].orientation;
-
-////            v_p << model_states.twist[i].linear.x , model_states.twist[i].linear.y ,model_states.twist[i].linear.z ;
-
-////           // p_p << model_states.pose[i].position.x ,  model_states.pose[i].position.y , model_states.pose[i].position.z;
-////        }
-
-////        if(model_states.name[i].compare("firefly1")==0){
-
-//////            leader_pose.pose.position = model_states.pose[i].position;
-//////            leader_pose.pose.orientation = model_states.pose[i].orientation;
-//////            leader_vel.twist.linear = model_states.twist[i].linear;
-//////            leader_vel.twist.angular = model_states.twist[i].angular;
-
-//////            ori<< leader_pose.pose.orientation.w, leader_pose.pose.orientation.x,leader_pose.pose.orientation.y,leader_pose.pose.orientation.z;
-//////            pose << leader_pose.pose.position.x , leader_pose.pose.position.y, leader_pose.pose.position.z;
-//////            vel  << leader_vel.twist.linear.x, leader_vel.twist.linear.y, leader_vel.twist.linear.z;
-//////           ang << leader_vel.twist.angular.x, leader_vel.twist.angular.y,leader_vel.twist.angular.z;
-
-////        }
-
-////    }
-//}
-
 gazebo_msgs::LinkStates link_states;
 Eigen::Matrix3d R_c2_B;
 Eigen::Vector3d v_c2_I;
@@ -164,30 +133,22 @@ geometry_msgs::Point est_force;
 //geometry_msgs::Point est_force;
 
 geometry_msgs::WrenchStamped wrench2;
-void force2_cb(const geometry_msgs::WrenchStamped::ConstPtr &msg){
-    wrench2 = *msg;
 
-    Eigen::Vector3d wrench,data;
-    wrench << msg->wrench.force.x ,  msg->wrench.force.y , msg->wrench.force.z;
-       data             =payload_Rotation*wrench;
+Eigen::Matrix3d uav_rotation;
+ Eigen::Vector3d pc;
+void force_cb(const geometry_msgs::Point::ConstPtr &msg){
 
-    //T_F <<-1.0*est_force.x,-1.0*est_force.y,0  ;// data(0),data(1),data(2);
-    T_F <<data(0),data(1),0  ;// data(0),data(1),data(2);
-    //  T_F <<  msg->wrench.force.x , msg->wrench.force.y , 0;
+    Eigen::Vector3d f;
+    double l =0.18;   //the length of the cable
+    double L = 0.5; // the length of the payload
+    f<<msg->x , msg->y , msg->z;
+        Eigen::Vector3d pb;
+     pb  =   pose    -  uav_rotation * Eigen::Vector3d(0,0,0.05);
+     pc = pb+(f/f.norm())*l;
 
-    wrench2.wrench.force.x= data(0);
-    wrench2.wrench.force.y= data(1);
-    wrench2.wrench.force.z= data(2);
 
-}
-void force1_cb(const geometry_msgs::WrenchStamped::ConstPtr &msg){
-     //wrench1 = *msg;
-     Eigen::Vector3d wrench,data;
-     wrench << msg->wrench.force.x ,  msg->wrench.force.y , msg->wrench.force.z;
-        data=payload_Rotation.transpose()*wrench;
-     wrench1.wrench.force.x= data(0);
-     wrench1.wrench.force.y= data(1);
-     wrench1.wrench.force.z= data(2);
+
+
 }
 
 void est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
@@ -199,10 +160,6 @@ void est_vel_cb(const geometry_msgs::Point::ConstPtr& msg){
     Eigen::Vector3d pc1= Eigen::Vector3d(msg->x,msg->y,msg->z);
     Eigen::Vector3d rcp = Eigen::Vector3d(-0.5,0.0,0.0);
     v_p = pc1 + v_c2_I.cross(rcp);
-
-
-    std::cout << "=========="<<std::endl;
-    std::cout << v_p.transpose()<<std::endl;
 
 }
 
@@ -227,6 +184,19 @@ void odom_cb(const nav_msgs::Odometry::ConstPtr& msg){
     pose << leader_pose.pose.position.x , leader_pose.pose.position.y, leader_pose.pose.position.z;
     vel  << leader_vel.twist.linear.x, leader_vel.twist.linear.y, leader_vel.twist.linear.z;
    ang << leader_vel.twist.angular.x, leader_vel.twist.angular.y,leader_vel.twist.angular.z;
+
+   double w,x,y,z;
+   x=msg->pose.pose.orientation.x;
+   y=msg->pose.pose.orientation.y;
+   z=msg->pose.pose.orientation.z;
+   w=msg->pose.pose.orientation.w;
+
+   uav_rotation<< w*w+x*x-y*y-z*z  , 2*x*y-2*w*z ,            2*x*z+2*w*y,
+               2*x*y +2*w*z           , w*w-x*x+y*y-z*z    ,2*y*z-2*w*x,
+               2*x*z -2*w*y          , 2*y*z+2*w*x        ,w*w-x*x-y*y+z*z;
+
+
+
 
 }
 
@@ -260,17 +230,12 @@ int main(int argc, char **argv)
           ("/follower_ukf/force_estimate", 3, est_force_cb);
   ros::Subscriber imu1_sub = nh.subscribe("/payload/IMU1", 2, imu1_cb);
 
+
+  ros::Subscriber force_sub = nh.subscribe("/leader_ukf/force_estimate",2,force_cb);
+
   ros::Subscriber point2_sub = nh.subscribe("pointpc2",2,point2_cb);
   ros::Subscriber point_sub = nh.subscribe("pointvc2",2,point_cb);
-  //  ros::Subscriber model_sub20 = nh.subscribe<gazebo_msgs::ModelStates>
-  //           ("/gazebo/model_states", 5, model_cb);
-//   ros::Subscriber link_sub = nh.subscribe<gazebo_msgs::LinkStates>
-//           ("/gazebo/link_states", 3, link_cb);
-//   ros::Subscriber force2_sub = nh.subscribe<geometry_msgs::WrenchStamped>
-//           ("/ft_sensor2_topic", 3, force2_cb);
 
-//   ros::Subscriber force1_sub = nh.subscribe<geometry_msgs::WrenchStamped>
-//           ("/ft_sensor1_topic", 3, force1_cb);
 
 
    ros::Rate loop_rate(50.0);
@@ -283,46 +248,45 @@ int main(int argc, char **argv)
    trajectory_profile p1,p2,p3,p4,p5,p6,p7,p8 , p9 , p10,p11;
    std::vector<trajectory_profile> data;
 
-     p2.pos<< 3,1,0;
-     p2.vel<< 0,0,0;
-     p2.acc<< 0,0,0;
-     p2.yaw = 0;
+   p2.pos<< 2,2,0;
+        p2.vel<< 0,0,0;
+        p2.acc<< 0,0,0;
+        p2.yaw = 0;
 
-     p3.pos<< 3,5,0;
-     p3.vel<< 0,0,0;
-     p3.acc<< 0,0,0;
-     p3.yaw = 0;
+        p3.pos<< 3,5,0;
+        p3.vel<< 0,0,0;
+        p3.acc<< 0,0,0;
+        p3.yaw = 0;
 
-     p5.pos << 12,0,0;
-     p5.vel << 0,0,0;
-     p5.acc << 0,0,0;
-     p5.yaw = 0;
+        p5.pos << 12,0,0;
+        p5.vel << 0,0,0;
+        p5.acc << 0,0,0;
+        p5.yaw = 0;
 
-     p6.pos << 3,-5,0;
-     p6.vel << 0,0,0;
-     p6.acc << 0,0,0;
-     p6.yaw = 0;
+        p6.pos << 3,-5,0;
+        p6.vel << 0,0,0;
+        p6.acc << 0,0,0;
+        p6.yaw = 0;
 
-     p8.pos<< -3,5,0;
-     p8.vel<< 0,0,0;
-     p8.acc<< 0,0,0;
-     p8.yaw = 0;
+        p8.pos<< -3,5,0;
+        p8.vel<< 0,0,0;
+        p8.acc<< 0,0,0;
+        p8.yaw = 0;
 
-     p9.pos << -12,0,0;
-     p9.vel << 0,0,0;
-     p9.acc << 0,0,0;
-     p9.yaw = 0;
+        p9.pos << -12,0,0;
+        p9.vel << 0,0,0;
+        p9.acc << 0,0,0;
+        p9.yaw = 0;
 
-     p10.pos << -3,-5,0;
-     p10.vel << 0,0,0;
-     p10.acc << 0,0,0;
-     p10.yaw = 0;
+        p10.pos << -3,-5,0;
+        p10.vel << 0,0,0;
+        p10.acc << 0,0,0;
+        p10.yaw = 0;
 
-     p11.pos << 0,0,0;
-     p11.vel << 0,0,0;
-     p11.acc << 0,0,0;
-     p11.yaw = 0;
-
+        p11.pos << 0,0,0;
+        p11.vel << 0,0,0;
+        p11.acc << 0,0,0;
+        p11.yaw = 0;
    // path.push_back(segments(p1,p2,16.0));
     path.push_back(segments(p2,p3,16.0));
     path.push_back(segments(p3,p5,16.0));
@@ -411,6 +375,7 @@ int main(int argc, char **argv)
        Eigen::Vector3d   nonlinearterm;
        r_c2_p  << 0.5 , 0,0;
 
+
        nonlinearterm = R_c2_B*(omega_m.cross(v_p))- alpha.cross(r_c2_p)-omega_m.cross(omega_m.cross(r_c2_p));
        Eigen::Vector3d nonholoutput = nonholonomic_output(vir_x,vir_y,theta_r,vr,omega_r);
 
@@ -431,8 +396,11 @@ int main(int argc, char **argv)
         double mp=0.5;
         std::cout << "ok"<<std::endl;
 
+        double L = 1.0;
+        double I_p = (0.0833)*0.5*1.0*1.0;
+
         tmp <<  3.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + nonlinearterm(0) + vd_dot ,
-             3.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,
+             3.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,   //ffy is close to zero.
                                                   0;
 
         feedforward.x =nonlinearterm(0);
@@ -445,18 +413,23 @@ int main(int argc, char **argv)
         //
         vp_dot_des(0) =  cmd_(0);// + nonlinearterm(0);// + vd_dot ;
         vp_dot_des(1) =  cmd_(1);// + omegad_dot;
-        vp_dot_des(2) = 3*(1.3 - p_p(2))+0.5*(0-v_p(2));
+        vp_dot_des(2) = 1.0*(1.3 - pose(2))+0.6*(0-vel(2));
 
-        T_F(0) = 0;
-        T_F(1) = 0;
+        Eigen::Matrix3d M;
+        M<<mp , 0,0,
+                0,mp ,0,
+                0,0,1;
+        T_L = -T_F + M * vp_dot_des ;
 
-        T_L = -T_F + mp * vp_dot_des ;
-//         T_L = + mp * vp_dot_des ;
         desired_force.x = T_L(0);
         desired_force.y = T_L(1);
         desired_force.z = T_L(2);
-        desired_velocity.x = v_c2_B(0);
-        desired_velocity.y = v_c2_B(2);
+
+
+        desired_velocity.x = vr;
+        desired_velocity.y = omega_r;
+
+
 
         force.pose.position.x = T_L(0);
         force.pose.position.y = T_L(1);
