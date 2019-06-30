@@ -11,10 +11,16 @@ sudo apt-get install python-cvxopt
 //or
 sudo pip install cvxopt
 ```
-Additional package
+# Additional package
+
 ```
+sudo apt-get install ros-melodic-ompl
+sudo apt-get install ros-melodic-mavros
+sudo apt-get install ros-melodic-mavros-extras 
+sudo apt-get install ros-melodic-mavros-msgs
 
-
+cd /opt/ros/melodic/lib/mavros
+sudo ./install_geographiclib_datasets.sh
 
 
 ```
