@@ -394,7 +394,7 @@ int main(int argc, char **argv)
         Eigen::Vector3d tmp;
         Eigen::Vector3d cmd_;
         double mp=0.5;
-        std::cout << "ok"<<std::endl;
+       // std::cout << "ok"<<std::endl;
 
         double L = 1.0;
         double I_p = (0.0833)*0.5*1.0*1.0;

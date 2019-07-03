@@ -207,7 +207,7 @@ add_executable(mocap src/mocap.cpp)
 add_executable(geo_plan src/geo_plan.cpp)
 add_executable(geo2 src/geo2.cpp)
 add_executable(obstacle src/obstacle.cpp)
-
+add_executable(geo2_new src/geo2_new.cpp)
 #add_executable(force src/force.cpp)
 #add_executable(coop1 src/coop1.cpp)
 
@@ -295,6 +295,14 @@ target_link_libraries(
      qptrajectory
      geometric_controller
 )
+target_link_libraries(
+    geo2_new
+     ${catkin_LIBRARIES}
+     ${PYTHON_LIBRARIES}
+     qptrajectory
+     geometric_controller
+)
+
 
 
 #target_link_libraries(attb
