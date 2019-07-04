@@ -52,8 +52,9 @@ geometry_msgs::Point  data;
 
 Eigen::Vector3d  v_c2_truth, v_c2_b_truth;
 Eigen::Vector3d  p_c2_truth;
-Eigen::Matrix3d  payload_rotatiob_truth;
+Eigen::Matrix3d  payload_rotation_truth;
 Eigen::Vector3d  v_c2_y;
+ double payload_yaw;
 void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
 
     gazebo_msgs::LinkStates links = *msg;
@@ -75,13 +76,12 @@ void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
                 tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
                 //body to inertial frame
-                payload_rotatiob_truth<< cos(yaw), -sin(yaw) , 0,
+                payload_rotation_truth<< cos(yaw), -sin(yaw) , 0,
                                          sin(yaw),  cos(yaw),  0,
                                          0   ,   0       ,   1;
-
-                v_c2_y = payload_rotatiob_truth * vec ;
-
+                v_c2_y = payload_rotation_truth * vec ;
                 v_c2_b_truth =  payload_Rotation.transpose()* v_c2_truth;
+                std::cout << "yaw_error:  "  << payload_yaw    -yaw          << std::endl;
 
             }
         }
@@ -91,31 +91,28 @@ void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
 
 Eigen::Vector3d pfc;
  Eigen::Vector3d f, fb ,vb;
+ double last_time;
 void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     est_force = *msg;
-
-    f<< -est_force.x, -est_force.y, est_force.z;
-
+    f<< -est_force.x, -est_force.y, -est_force.z;
     pfc  =    pose    -  uav_rotation * Eigen::Vector3d(0,0,0.05);// offset x from uav to connector
-
-    p_c2 = pfc +  (f/f.norm())* 0.18 ;
-
-    v_c2 =   (p_c2 - last_p_c2)/0.02;
-    double payload_yaw = atan( v_c2(1) / v_c2(0));
+    p_c2 = pfc -  (f/f.norm()) * 0.18 ;
+    double dt =  ros::Time::now().toSec() - last_time;
+    v_c2 =   (p_c2 - last_p_c2)/dt;
+   payload_yaw = atan2( v_c2(1), v_c2(0));
 
     //from inertial frame to body frame
-    std::cout <<    "v_c2 error : "<<(v_c2).transpose() << std::endl;
+    std::cout <<    "v_c2 error : "<<(p_c2 - p_c2_truth).transpose() << std::endl;
 
 
-    data.x = (p_c2 - p_c2_truth)(0);
-    data.y = (p_c2 - p_c2_truth)(1);
-    data.z = (p_c2 - p_c2_truth)(2);
-    payload_yaw = atan( v_c2_truth(1) / v_c2_truth(0));
+    data.x = (v_c2 - v_c2_truth)(0);
+    data.y = (v_c2 - v_c2_truth)(1);
+    data.z = (v_c2 - v_c2_truth)(2);
+   // payload_yaw = atan2( v_c2_truth(1) / v_c2_truth(0));
     //body frame to inertial frame.
     payload_Rotation << cos(payload_yaw), -sin(payload_yaw) ,0,
                         sin(payload_yaw), cos(payload_yaw) ,0,
                             0           ,      0           ,1;
-
 
 
     //change the force from inertial frame to body.
@@ -123,6 +120,7 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
 
      last_p_c2 = p_c2;
 
+    last_time = ros::Time::now().toSec();
 }
 
 
@@ -223,32 +221,30 @@ int main(int argc, char **argv)
             v<<0.0,0.0,0.0;
 
 
-            fb = payload_rotatiob_truth *f;
-            vb = payload_rotatiob_truth *vel;
-               // v_c2_b_truth
+            fb = payload_rotation_truth *f;
+            vb = payload_rotation_truth *vel;
 
 
-//            ab <<  ( 0-fb(0))*0.2  + ( v_c2_b_truth(0)),
-//                    fb(1) + 0.1*(0 - v_c2_b_truth(1)) ,
-//                    5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5*0.5*9.8;
+            //   fb
+            //   v_c2_b_truth
 
 
-
-            // + 0.1*( vb(0))
-
-//            ab <<   (0-fb(0))*0.2 + vb(0),
-//                    fb(1) + 0.1*(0-vb(1)),
-//                    5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5*0.5*9.8;
-
-          //  a = payload_rotatiob_truth.transpose() * ab;
-
-
-            a << 1.0*(0-vel(0)) + (0-ffx)/1.5 + 0.3*v_c2_y(0),
-                 1.0*(0-vel(1)) + (0-ffy)/1.5 + 0.3*v_c2_y(1),
-                 5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5*0.5*9.8;
+            ab << (0-vb(0))/2.0+ (0-fb(0))/5.5,
+                  (0-vb(1))/1.3+ (0-fb(1))/1.0,
+                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
 
 
 
+            a =  payload_rotation_truth.transpose() * ab;
+
+
+//            a << (0-ffx)/2,
+//                 (0-ffy)/2+  (0-v_c2_y(1)),
+//                 5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) ;
+
+
+
+            //1.0*(0-vel(1)) + (0-ffy)/1.5 + 0.3*v_c2_y(1) ,
             //a << (0-ffx)/1.5, (0-ffy)/1.5 , 5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) ;
 
 

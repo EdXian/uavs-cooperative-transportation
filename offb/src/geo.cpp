@@ -248,7 +248,7 @@ int main(int argc, char **argv)
    trajectory_profile p1,p2,p3,p4,p5,p6,p7,p8 , p9 , p10,p11;
    std::vector<trajectory_profile> data;
 
-   p2.pos<< 2,2,0;
+   p2.pos<< 1,1,0;
         p2.vel<< 0,0,0;
         p2.acc<< 0,0,0;
         p2.yaw = 0;
@@ -416,8 +416,8 @@ int main(int argc, char **argv)
         vp_dot_des(2) = 1.0*(1.3 - pose(2))+0.6*(0-vel(2));
 
         Eigen::Matrix3d M;
-        M<<mp , 0,0,
-                0,mp ,0,
+        M<<     mp,0,0,
+                0,mp,0,
                 0,0,1;
         T_L = -T_F + M * vp_dot_des ;
 
