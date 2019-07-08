@@ -84,6 +84,8 @@ void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
                 v_c2_b_truth =  payload_rotation_truth.transpose()* v_c2_truth;
                 //std::cout << "yaw_error:  "  << payload_yaw    -yaw          << std::endl;
                 data.z = payload_yaw    -yaw ;
+
+
             }
         }
 
@@ -118,28 +120,22 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     p_c2 = pfc + (f/f.norm()) * 0.18 ;
     double dt =  ros::Time::now().toSec() - last_time;
 
-//    p_c2(0) = lpx.filter(p_c2(0));
-//    p_c2(1) = lpy.filter(p_c2(1));
-
     v_c2 =   (p_c2 - last_p_c2);
 
    payload_yaw = atan2( tmpy - last_tmp_y, tmpx-last_tmp_x);
+   if(payload_yaw < 0){
+       payload_yaw += 2*3.1415926;
+   }
 
-    //from inertial frame to body frame
-//    std::cout <<    "v_c2 error : "<<(p_c2 - p_c2_truth).transpose() << std::endl;
 
-//    data.x = (p_c2 - p_c2_truth)(0);
-//    data.y = (p_c2 - p_c2_truth)(1);
-//    data.z = (p_c2 - p_c2_truth)(2);
-   // payload_yaw = atan2( v_c2_truth(1) / v_c2_truth(0));
-    //body frame to inertial frame.
-    payload_Rotation << cos(payload_yaw), -sin(payload_yaw) ,0,
-                        sin(payload_yaw), cos(payload_yaw) ,0,
+
+   payload_Rotation << cos(payload_yaw), -sin(payload_yaw) ,0,
+                       sin(payload_yaw), cos(payload_yaw)  ,0,
                             0           ,      0           ,1;
 
 
     //change the force from inertial frame to body.
-    if((count_ %2 ==0) && (pos_x_buffer.size()>7)){
+    if((count_ %1 ==0) && (pos_x_buffer.size()>7)){
         pos_x_buffer.pop();
         pos_y_buffer.pop();
         pos_x_buffer.push(p_c2(0));
@@ -197,7 +193,7 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
         ty<< t1, t2, t3, t4, t5,t6,t7;
         coeff_y = (w.transpose() * w).inverse() * w.transpose()* ty;
 
-        double t=0.16;
+        double t=0.14;
 
 
         tmpx = coeff_x(0)*1 + coeff_x(1)*t + coeff_x(2)*t*t+
@@ -206,8 +202,11 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
                coeff_y(3)*1*t*t*t + coeff_y(4)*t*t*t*t + coeff_y(5)*t*t*t*t*t;
 
 
-        data.x = 0.7*last_tmp_x + 0.2*tmpx;
-        data.y = 0.7*last_tmp_y + 0.2*tmpy;
+        tmpx = 0.7*last_tmp_x + 0.3*tmpx;
+        tmpy = 0.7*last_tmp_y + 0.3*tmpy;
+
+        data.x = tmpx;
+        data.y = tmpy;
 
         last_tmp_x = tmpx ;
         last_tmp_y = tmpy ;
@@ -215,7 +214,7 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
 //        std::cout << data.x<<std::endl;
 //        std::cout << data.y<<std::endl;
 
-    }else if (count_%2==0){
+    }else if (count_%1==0){
 
         pos_x_buffer.push(p_c2(0));
         pos_y_buffer.push(p_c2(1));
@@ -324,8 +323,8 @@ int main(int argc, char **argv)
             v<<0.0,0.0,0.0;
 
 
-            fb = payload_rotation_truth * f;
-            vb = payload_rotation_truth * vel;
+            fb = payload_Rotation * f;
+            vb = payload_Rotation * vel;
 
 
             //   fb
