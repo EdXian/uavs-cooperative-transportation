@@ -296,8 +296,8 @@ MainWindow::MainWindow(QWidget *parent) :
       ui->qcustomplot9->addGraph();
       ui->qcustomplot9->addGraph();
 
-      ui->qcustomplot8->graph(0)->setName("vel_est_x");
-      ui->qcustomplot9->graph(0)->setName("vel_est_y");
+      ui->qcustomplot8->graph(0)->setName("Estimated velocity");
+      ui->qcustomplot9->graph(0)->setName("Estimated omega");
       ui->qcustomplot8->graph(1)->setName("ground truth ");
       ui->qcustomplot9->graph(1)->setName("ground truth");
       ui->qcustomplot8->legend->setVisible(true);
@@ -364,8 +364,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->qcustomplot6->graph(0)->setName("desired vel \n(payload)");
     ui->qcustomplot7->graph(0)->setName("desired omega \n(payload)");
-    ui->qcustomplot6->graph(1)->setName("estimate vel ");
-    ui->qcustomplot7->graph(1)->setName("estimate omega");
+    ui->qcustomplot6->graph(1)->setName("estimated vel ");
+    ui->qcustomplot7->graph(1)->setName("estimated omega");
     ui->qcustomplot6->legend->setVisible(true);
     ui->qcustomplot7->legend->setVisible(true);
 
@@ -625,7 +625,7 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
             c2<<c2_vel.x , c2_vel.y, 0;
             c2_ = rotation_matrix* c2;
             ui->qcustomplot8->graph(0)->addData(time, c2_(0)  );
-            ui->qcustomplot9->graph(0)->addData(time, c2_(1));
+            ui->qcustomplot9->graph(0)->addData(time, -c2_(1));
             QPen ppen;
             ppen.setColor(Qt::blue);
             ppen.setWidth(4);
@@ -644,7 +644,7 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
              linear<<link_state.twist[i].linear.x,link_state.twist[i].linear.y,0;
                 linear_  =  rotation_matrix*linear ;
              ui->qcustomplot8->graph(1)->addData(time, linear_(0));
-             ui->qcustomplot9->graph(1)->addData(time, linear_(1));
+             ui->qcustomplot9->graph(1)->addData(time, -linear_(1));
 
              Eigen::Vector3d vc2_, vc2_b;
              vc2_ << link_state.twist[i].linear.x, link_state.twist[i].linear.y, 0;

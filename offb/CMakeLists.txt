@@ -162,7 +162,7 @@ add_library(
     geometric_controller  SHARED
      include/geometric_controller.cpp
  )
-
+add_library(lpfilter   SHARED include/lpf.cpp)
 add_library(qptrajectory SHARED include/qptrajectory.cpp)
 
 target_link_libraries(
@@ -207,7 +207,7 @@ add_executable(mocap src/mocap.cpp)
 add_executable(geo_plan src/geo_plan.cpp)
 add_executable(geo2 src/geo2.cpp)
 add_executable(obstacle src/obstacle.cpp)
-add_executable(geo2_new src/geo2_new.cpp)
+add_executable(geo2_new src/geo2_new.cpp  )
 #add_executable(force src/force.cpp)
 #add_executable(coop1 src/coop1.cpp)
 
@@ -301,6 +301,7 @@ target_link_libraries(
      ${PYTHON_LIBRARIES}
      qptrajectory
      geometric_controller
+     lpfilter
 )
 
 
