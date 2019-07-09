@@ -143,7 +143,7 @@ Visualization Manager:
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
       Line Style: Lines
-      Line Width: 0.029999999329447746
+      Line Width: 0.2
       Name: Path
       Offset:
         X: 0
@@ -152,7 +152,7 @@ Visualization Manager:
       Pose Color: 255; 85; 255
       Pose Style: None
       Radius: 0.029999999329447746
-      Shaft Diameter: 0.10000000149011612
+      Shaft Diameter: 0.20000000149011612
       Shaft Length: 0.10000000149011612
       Topic: /sPath
       Unreliable: false
@@ -249,7 +249,7 @@ Visualization Manager:
   Views:
     Current:
       Angle: 0
-      Class: rviz/TopDownOrtho
+      Class: rviz/XYOrbit
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -260,7 +260,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Scale: 134.7607421875
       Target Frame: <Fixed Frame>
-      Value: TopDownOrtho (rviz)
+      Value: XYOrbit (rviz)
       X: 24.289020538330078
       Y: 72.48578643798828
     Saved: ~

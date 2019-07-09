@@ -11,14 +11,14 @@ const int Node3D::dir = 3;
 //const float Node3D::dt[] = { 0,         0.10472,   -0.10472};
 
 // R = 6, 6.75 DEG
-const float Node3D::dy[] = { 0,        -0.0415893,  0.0415893};
-const float Node3D::dx[] = { 0.7068582,   0.705224,   0.705224};
-const float Node3D::dt[] = { 0,         0.1178097,   -0.1178097};
+//const float Node3D::dy[] = { 0,        -0.0415893,  0.0415893};
+//const float Node3D::dx[] = { 0.7068582,   0.705224,   0.705224};
+//const float Node3D::dt[] = { 0,         0.1178097,   -0.1178097};
 
 // R = 3, 6.75 DEG
-//const float Node3D::dy[] = { 0,        -0.0207946, 0.0207946};
-//const float Node3D::dx[] = { 0.35342917352,   0.352612,  0.352612};
-//const float Node3D::dt[] = { 0,         0.11780972451,   -0.11780972451};
+const float Node3D::dy[] = { 0,        -0.0207946, 0.0207946};
+const float Node3D::dx[] = { 0.35342917352,   0.352612,  0.352612};
+const float Node3D::dt[] = { 0,         0.11780972451,   -0.11780972451};
 
 //const float Node3D::dy[] = { 0,       -0.16578, 0.16578};
 //const float Node3D::dx[] = { 1.41372, 1.40067, 1.40067};

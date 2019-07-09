@@ -9,8 +9,8 @@
   <env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find rotors_gazebo)/models"/>
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <!--<arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world"/>-->
-<!--    <arg name="world_name" value="$(find rotors_gazebo)/worlds/drone_inv.world"/>-->
-    <arg name="world_name" value="$(find rotors_gazebo)/worlds/obstacle_world2.world"/>
+    <arg name="world_name" value="$(find rotors_gazebo)/worlds/drone_inv.world"/>
+<!--    <arg name="world_name" value="$(find rotors_gazebo)/worlds/empty_world.world"/>-->
 
 
 

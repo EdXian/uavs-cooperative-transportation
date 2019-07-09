@@ -8,7 +8,7 @@
 #include "ros/callback_queue.h"
 #include "ros/subscribe_options.h"
 #include "nav_msgs/OccupancyGrid.h"
-#define obstacle_generate 0
+//#define obstacle_generate 1
 namespace gazebo
 {
 class Factory : public WorldPlugin
@@ -51,7 +51,6 @@ public: void OnRosMsg(const nav_msgs::OccupancyGridConstPtr &msg)
 private: void map_cb(const nav_msgs::OccupancyGrid::ConstPtr& msg){
   obstacle_map = *msg;
   int cur_x = 0, cur_y=-1;
-//  std::cout <<obstacle_map.info.width << " " << obstacle_map.info.height<<std::endl;
    bit_map.resize(obstacle_map.info.width);
    for(unsigned int i=0; i<obstacle_map.info.width ;i++){
        bit_map[i].resize(obstacle_map.info.height);
@@ -90,9 +89,10 @@ private: void map_cb(const nav_msgs::OccupancyGrid::ConstPtr& msg){
       for(unsigned int j=0;j< obstacle_map.info.height ;j++){
           if(bit_map[i][j]){
               sdf::SDF sphereSDF;
-              char a[50];
+              char a[300];
               char b[50];
-              sprintf(a , "<pose>%d %d %d 0 0 0</pose>", i,j,0.75);
+              double posx = i*0.5,posy=j*0.5;
+              sprintf(a , "<pose>%.3f %.3f %.3f 0 0 0</pose>", posx,posy,1.0);
               std::string pose_str = std::string(a);
 
               std::string sdf_str(  "<sdf version ='1.4'>\
@@ -103,7 +103,7 @@ private: void map_cb(const nav_msgs::OccupancyGrid::ConstPtr& msg){
                                    <pose>0 0 0 0 0 0</pose>\
                                    <visual name ='visual'>\
                                      <geometry>\
-                                       <box> <size>1.0 1.0 3.0</size></box>\
+                                       <box> <size>0.5 0.5 3.0</size></box>\
                                      </geometry>\
                                    </visual>\
                                  </link>\

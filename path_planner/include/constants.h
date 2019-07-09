@@ -74,7 +74,7 @@ static const float deltaHeadingRad = 2 * M_PI / (float)headings;
 /// [c*M_PI] --- The heading part of the goal condition
 static const float deltaHeadingNegRad = 2 * M_PI - deltaHeadingRad;
 /// [m] --- The cell size of the 2D grid of the world
-static const float cellSize = 1;
+static const float cellSize = 0.5;
 /*!
   \brief [m] --- The tie breaker breaks ties between nodes expanded in the same cell
 

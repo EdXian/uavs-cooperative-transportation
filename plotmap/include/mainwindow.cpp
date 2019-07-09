@@ -265,10 +265,10 @@ void MainWindow::map_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg){
 
             //split 1-d data to 2-D
             if( i% ( map_grid_data.info.width) ==0){
-                cur_y++;
+                cur_y+=1;
                 cur_x=0;
             }else{
-                cur_x++;
+                cur_x+=1;
             }
             //the object is an obstacle if its value is not zero.
             if(map_grid_data.data[i] != 0){
@@ -278,8 +278,8 @@ void MainWindow::map_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg){
                 section->topLeft->setAxes(ui->plot->xAxis, ui->plot->yAxis);
                 section->bottomRight->setType(QCPItemPosition::ptPlotCoords);
                 section->bottomRight->setAxes(ui->plot->xAxis, ui->plot->yAxis);
-                section->topLeft->setCoords(cur_x-0.5 , cur_y+0.5);
-                section->bottomRight->setCoords(cur_x +0.5,cur_y-0.5);
+                section->topLeft->setCoords(cur_x*0.5-0.25 , cur_y*0.5+0.25);
+                section->bottomRight->setCoords(cur_x*0.5 +0.25,cur_y*0.5-0.25);
                 section->setBrush(QBrush(QColor(0,200,0,100)));
                 section->setPen(Qt::NoPen);
 
@@ -340,14 +340,19 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
         int  c = 0;
         for(unsigned int i=0;i< path.poses.size();i++){
 
-                tmp.push_back( path.poses[path.poses.size()-i-1]);
+            if(i%2==0){
+               tmp.push_back( path.poses[path.poses.size()-i-1]);
+
+            }
+
+
 
         }
 
 
 
         for(unsigned int k=0;k<tmp.size();k++){
-            if( (k< tmp.size()-1)   ){
+            if( (k< tmp.size()-1)  ){
                 trajectory_profile start, end;
                 start.pos << tmp[k].pose.position.x,tmp[k].pose.position.y,0;
                 end.pos << tmp[k+1].pose.position.x,tmp[k+1].pose.position.y,0;
