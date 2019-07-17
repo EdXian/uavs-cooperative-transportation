@@ -23,7 +23,7 @@
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Dense"
 #include "gazebo_msgs/ModelStates.h"
-
+#include "nav_msgs/OccupancyGrid.h"
 struct tracker_pos{
   QVector<double> x;
   QVector<double> y;
@@ -73,9 +73,14 @@ private:
     QVector<QCPCurveData> conn2_curve_data;
 
 
+    QCPCurve *map_path_curve;
+    QVector<QCPCurveData> map_path_curve_data;
+
     QCPCurve *desired_curve;
     QVector<QCPCurveData> desired_curve_data;
 
+    QCPCurve *map_desired_curve;
+    QVector<QCPCurveData> map_desired_curve_data;
 //    QVector<QCPCurveData> curve_data;
 //    std::vector<QCPCurve*> curve_list;
 //    std::vector<QCPCurve*> path_curve_list;
@@ -98,12 +103,12 @@ private:
     void desired_velocity_cb(const geometry_msgs::Point::ConstPtr& msg);
     void vel_est_cb(const  geometry_msgs::Point::ConstPtr& msg);
     void vel_est_b_cb(const geometry_msgs::Point::ConstPtr& msg);
-
+    void map_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 
     //   void me_cb(const  ukf_estimate::output::ConstPtr& msg  );
     double t_max;
     double t_min;
-
+    nav_msgs::OccupancyGrid map_grid_data;
     tracker_pos tracker;
     QTimer *timer;
     QTimer *state_timer;
@@ -156,13 +161,45 @@ private:
     ros::Subscriber force1_sub;
     ros::Subscriber desired_force_sub;
     ros::Subscriber desired_vel_sub;
-
+    ros::Subscriber map_sub;
     ros::Subscriber vel_est_sub;
     ros::Subscriber vel_estb_sub;
 
-    ros::Subscriber cv_sub;
-    ros::Subscriber me_sub;
-    ros::Subscriber mavros_state_sub;
+    ros::Publisher px;
+    ros::Publisher py;
+
+    ros::Publisher flx;
+    ros::Publisher fly;
+
+    ros::Publisher ffx;
+    ros::Publisher ffy;
+
+    ros::Publisher vc2_vx;
+    ros::Publisher vc2_vy;
+
+    ros::Publisher vc2_v;  //(est des groundtruth)
+    ros::Publisher vc2_w;   //(est des groundtruth)
+    ros::Publisher trig;
+
+
+    geometry_msgs::Point px_;
+     geometry_msgs::Point py_;
+
+     geometry_msgs::Point flx_;
+    geometry_msgs::Point fly_;
+
+     geometry_msgs::Point ffx_;
+     geometry_msgs::Point ffy_;
+
+     geometry_msgs::Point vc2_v_;  //(est des groundtruth)
+     geometry_msgs::Point vc2_w_;   //(est des groundtruth)
+
+    geometry_msgs::Point vc2_vx_;
+     geometry_msgs::Point vc2_vy_;
+     geometry_msgs::Point trig_;
+
+
+
     ros::master::V_TopicInfo topic_list;
     bool getRosTopics(ros::master::V_TopicInfo& topics);
     bool autoscroll ;

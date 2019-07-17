@@ -340,14 +340,14 @@ int main(int argc, char **argv)
 //            ab << (0-vel(0))/1.0+ (f(0))/1.5,
 //                  (0-vel(1))/1.0+ (f(1))/1.5,
 //                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
-//            a =   ab;
+            a =   ab;
 
 
             desired_pose.pose.position.x = pose(0);
             desired_pose.pose.position.y = pose(1);
 
-            force.pose.position.x = a(0)+1.0*(pose(0)-p_c2(0));           //a(0) ;
-            force.pose.position.y = a(1)+1.0*(pose(1)-p_c2(1));
+            force.pose.position.x = a(0);           //a(0) ;
+            force.pose.position.y = a(1);
             force.pose.position.z = a(2) ;
 
 

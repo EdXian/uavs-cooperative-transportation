@@ -37,8 +37,8 @@
 
 <node
     pkg="offb"
-    type="geo2_new"
-    name="geo2_new"
+    type="geo2"
+    name="geo2"
     output="screen">
 </node>
 

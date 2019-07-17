@@ -55,7 +55,8 @@ target_link_libraries (plot Qt5::Widgets Qt5::Core ${catkin_LIBRARIES} )
 
 #add_executable(subtest src/subtest.cpp)
 
-
+add_executable(bagconv src/bagconv.cpp)
+target_link_libraries(bagconv ${catkin_LIBRARIES})
 
 add_executable(testplot src/testplot.cpp
                                 ${qt_srcs}

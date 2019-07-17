@@ -378,7 +378,7 @@ std::vector<trajectory_profile> data;
 
     nh.getParam("/start",flag);
 
-    if(flag == false || (tick>data.size())&& (data.size() == 0)){
+    if(flag == false || (tick>data.size())){
 
        //do position control
        Eigen::Vector3d p,v,a;
@@ -387,11 +387,23 @@ std::vector<trajectory_profile> data;
        a<<0.0,0.0,0.0;
         nh.setParam("/start",false);
 
-        tick = 0;
 
-        force.pose.position.x = 3*(desired_pose.pose.position.x - pose(0))+1*(0-vel(0));
-        force.pose.position.y = 3*(desired_pose.pose.position.y - pose(1))+1*(0-vel(1));
-        force.pose.position.z = 3*(desired_pose.pose.position.z - pose(2))+1*(0-vel(2))+0.5*9.8*0.5;
+       if(tick>data.size()){
+
+         desired_pose.pose.position.x = data[data.size()-1].pos(0);
+         desired_pose.pose.position.y = data[data.size()-1].pos(1);
+         desired_pose.pose.position.z = 1.3;
+         force.pose.position.x = 3*(desired_pose.pose.position.x - pose(0))+1*(0-vel(0));
+         force.pose.position.y = 3*(desired_pose.pose.position.y - pose(1))+1*(0-vel(1));
+         force.pose.position.z = 3*(desired_pose.pose.position.z - pose(2))+1*(0-vel(2))+0.5*9.8*0.5;
+         tick = 0;
+
+       }else{
+         force.pose.position.x = 3*(desired_pose.pose.position.x - pose(0))+1*(0-vel(0));
+         force.pose.position.y = 3*(desired_pose.pose.position.y - pose(1))+1*(0-vel(1));
+         force.pose.position.z = 3*(desired_pose.pose.position.z - pose(2))+1*(0-vel(2))+0.5*9.8*0.5;
+       }
+
 
 
      }else{
@@ -438,7 +450,7 @@ std::vector<trajectory_profile> data;
        Eigen::Vector3d   nonlinearterm;
        r_c2_p  << 0.5 , 0,0;
 
-       nonlinearterm = R_c2_B*(omega_m.cross(v_p))- alpha.cross(r_c2_p)-omega_m.cross(omega_m.cross(r_c2_p));
+       nonlinearterm = R_c2_B*(omega_m.cross(v_p))-omega_m.cross(omega_m.cross(r_c2_p));
        Eigen::Vector3d nonholoutput = nonholonomic_output(vir_x,vir_y,theta_r,vr,omega_r);
 
        //  R_-1 * omega x v - omega_dot x rcp - omega x (omega x r)
@@ -458,8 +470,8 @@ std::vector<trajectory_profile> data;
         double mp=0.5;
        // std::cout << "ok"<<std::endl;
 
-        tmp <<  2.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + 0.0*(nonlinearterm(0) + vd_dot) ,
-             2.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,
+        tmp <<  2.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + 1.0*(nonlinearterm(0) + vd_dot) ,
+             4.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,
                                                   0;
 
         feedforward.x =nonlinearterm(0);
@@ -478,6 +490,9 @@ std::vector<trajectory_profile> data;
         T_F(1) = 0;
 
         T_L = -T_F + mp * vp_dot_des ;
+
+
+
 //         T_L = + mp * vp_dot_des ;
         desired_force.x = T_L(0);
         desired_force.y = T_L(1);

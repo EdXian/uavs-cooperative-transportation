@@ -57,7 +57,7 @@ private:
     QCPItemText *end_text;
     QCPItemText *origin_text;
 
-
+    std::vector<double>   time_interval;
     QCPCurve *qp_path_curve;
     QVector<QCPCurveData> qp_curve_data;
 

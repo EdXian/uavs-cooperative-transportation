@@ -64,7 +64,7 @@ static const double width = 0.6+ 2 * bloating;
 /// [m] --- The length of the vehicle
 static const double length = 1.7 + 2 * bloating;
 /// [m] --- The minimum turning radius of the vehicle
-static const float r = 6;
+static const float r = 15;   //r=6
 /// [m] --- The number of discretizations in heading
 static const int headings = 72;
 /// [°] --- The discretization value of the heading (goal condition)

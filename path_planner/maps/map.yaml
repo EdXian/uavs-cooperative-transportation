@@ -1,4 +1,4 @@
-image: map.png
+image: maze4.png
 resolution: 0.5
 origin: [0.0, 0.0, 0.0]
 occupied_thresh: 0.1

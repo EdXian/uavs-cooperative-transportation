@@ -40,6 +40,7 @@ find_package(Qt5PrintSupport)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${Qt5Widgets_INCLUDES})
 include_directories(
+    /
   include
   ${PYTHON_INCLUDE_DIR}
 
@@ -65,6 +66,15 @@ add_executable(plotmap src/plotmap.cpp
                                 ${qt_srcs}
                                  ${qt_hdrs}
                                  )
+
+add_executable(plot_rviz src/plot_rviz.cpp     )
+
+
+
+target_link_libraries(plot_rviz
+                  ${catkin_LIBRARIES}
+                   )
+
 target_link_libraries(plotmap
                    plot
                    ${OPENGL_LIBRARIES}

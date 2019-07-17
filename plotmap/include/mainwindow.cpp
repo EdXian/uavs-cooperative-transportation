@@ -20,7 +20,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->qpsolve_Button,SIGNAL(clicked()),this,SLOT(qpsolve_button()));
     connect(ui->publish_button, SIGNAL(clicked()), this, SLOT(traj_pub_button()) );
     Timer->start(50);
-
 }
 void MainWindow::traj_pub_button(){
    //traj.time_from_start =0.02;
@@ -125,11 +124,11 @@ void MainWindow::qpsolve_button(){
 
     //std::cout << "start   " << path_vec[0].b_c.pos.transpose() <<std::endl;
     if(path_vec.size()>0){
-        data = plan.get_profile(path_vec, path_vec.size(), 0.02);
+        data = plan.get_profile(path_vec, path_vec.size(), 0.05);
     }
 
     std::cout << "profile count" << data.size()<<std::endl;
-    for(unsigned int i=100;i< (data.size()-10);i++){
+    for(unsigned int i=30;i< (data.size()-10);i++){
 
         qp_curve_data.push_back(QCPCurveData(i,data[i].pos(0),data[i].pos(1)));
 
@@ -333,31 +332,47 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
 
 
         }
-        //inverse the waypoint vector
+        //inverse the waypoint vector  and select waypoinnts.
         std::vector<geometry_msgs::PoseStamped> tmp;
         tmp.clear();
 
         int  c = 0;
-        for(unsigned int i=0;i< path.poses.size();i++){
+        geometry_msgs::PoseStamped last_pose;
 
-            if(i%2==0){
-               tmp.push_back( path.poses[path.poses.size()-i-1]);
-
-            }
-
-
-
+        for(unsigned int i=0;i<path.poses.size();i++){
+          tmp.push_back( path.poses[path.poses.size()-i-1]);
         }
+//        for(unsigned int i=0;i< path.poses.size();i++){
+//          //  geometry_msgs::PoseStamped cur_pose= path.poses[i];
+//            double dist = (path.poses[path.poses.size()-i-1].pose.position.x - last_pose.pose.position.x)* (path.poses[path.poses.size()-i-1].pose.position.x - last_pose.pose.position.x)
+//                          +(path.poses[path.poses.size()-i-1].pose.position.y - last_pose.pose.position.y)* (path.poses[path.poses.size()-i-1].pose.position.y - last_pose.pose.position.y);
+//            dist = sqrt(dist);
+////             ROS_WARN("%f",dist);
+//            if(i==0){
+
+//              tmp.push_back( path.poses[path.poses.size()-i-1]);
+//              last_pose = path.poses[path.poses.size()-i-1];
+//              //time_interval.push_back(0.002);
+//            }else if(    (i>0)   &&    (dist>0.5 )              ){
+//              tmp.push_back( path.poses[path.poses.size()-i-1]);
+//              last_pose = path.poses[path.poses.size()-i-1];
+//              //time_interval.push_back(0.005);
+
+//            }
 
 
+//        }
 
+        time_interval.clear();
         for(unsigned int k=0;k<tmp.size();k++){
             if( (k< tmp.size()-1)  ){
                 trajectory_profile start, end;
                 start.pos << tmp[k].pose.position.x,tmp[k].pose.position.y,0;
                 end.pos << tmp[k+1].pose.position.x,tmp[k+1].pose.position.y,0;
                 double dist = (start.pos - end.pos).norm();
-                path_vec.push_back(segments(start,end,1));
+                ROS_WARN(" dist = %f",dist);
+                time_interval.push_back(dist);
+                path_vec.push_back(segments(start,end,dist*3));
             }
         }
 
@@ -375,7 +390,6 @@ void MainWindow::spath_cb(const nav_msgs::Path::ConstPtr &msg){
         origin_text->setPositionAlignment(Qt::AlignHCenter);
         origin_text->setText("Origin");
         origin_text->setFont(QFont(font().family(), 20));
-
 
         end_text->position->setCoords(path.poses[end_id].pose.position.x-1 , path.poses[end_id].pose.position.y);
         end_text->setPositionAlignment(Qt::AlignHCenter|Qt::AlignLeft);

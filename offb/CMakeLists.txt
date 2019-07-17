@@ -142,15 +142,11 @@ include_directories(
     include
     usr/include
     usr/include/gazebo-9
-
-
     ${OMPL_INCLUDE_DIRS}
-
-
- ${catkin_INCLUDE_DIRS}
-  ${PYTHON_INCLUDE_DIR}
-${Boost_INCLUDE_DIR}
-${GAZEBO_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIR}
+    ${GAZEBO_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -160,8 +156,8 @@ ${GAZEBO_INCLUDE_DIRS}
 
 add_library(
     geometric_controller  SHARED
-     include/geometric_controller.cpp
- )
+    include/geometric_controller.cpp
+)
 add_library(lpfilter   SHARED include/lpf.cpp)
 add_library(qptrajectory SHARED include/qptrajectory.cpp)
 

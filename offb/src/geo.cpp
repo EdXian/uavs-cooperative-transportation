@@ -417,7 +417,7 @@ int main(int argc, char **argv)
 
         Eigen::Matrix3d M;
         M<<     mp,0,0,
-                0,mp,0,
+                0,0.666,0,
                 0,0,1;
         T_L = -T_F + M * vp_dot_des ;
 

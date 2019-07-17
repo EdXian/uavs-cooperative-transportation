@@ -12,8 +12,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle("cooperative transportation");
     rotation_matrix.setZero(3,3);
-    local_sub = nh.subscribe<geometry_msgs::Point>("/uav2/local_position",2,&MainWindow::local_cb,this);
-    traj_sub=nh.subscribe<geometry_msgs::Point>("/uav2/desired_position",2,&MainWindow::traj_cb,this);
+   // local_sub = nh.subscribe<geometry_msgs::Point>("/uav2/local_position",2,&MainWindow::local_cb,this);
+   // traj_sub=nh.subscribe<geometry_msgs::Point>("/uav2/desired_position",2,&MainWindow::traj_cb,this);
     desired_traj_sub =nh.subscribe<geometry_msgs::Point>("/drone1/desired_position",2 ,&MainWindow::desired_traj_cb,this);
 
     desired_force_sub = nh.subscribe<geometry_msgs::Point>("/desired_force",2,&MainWindow::desired_force_cb,this);
@@ -28,6 +28,24 @@ MainWindow::MainWindow(QWidget *parent) :
     link_state_sub = nh.subscribe<gazebo_msgs::LinkStates>("/gazebo/link_states",2,&MainWindow::link_cb,this);
     force2_sub= nh.subscribe<geometry_msgs::WrenchStamped>("/ft_sensor2_topic",2,&MainWindow::force2_cb,this);
     force1_sub  = nh.subscribe<geometry_msgs::WrenchStamped>("/ft_sensor1_topic",2 , &MainWindow::force1_cb,this);
+    map_sub = nh.subscribe<nav_msgs::OccupancyGrid>("/map",1,&MainWindow::map_cb,this);
+
+    px=nh.advertise<geometry_msgs::Point>("/data/px",2);
+    py=nh.advertise<geometry_msgs::Point>("/data/py",2);
+
+    flx = nh.advertise<geometry_msgs::Point>("/data/flx",2);
+    fly = nh.advertise<geometry_msgs::Point>("/data/fly",2);
+
+    ffx = nh.advertise<geometry_msgs::Point>("/data/ffx",2);
+    ffy = nh.advertise<geometry_msgs::Point>("/data/ffy",2);
+
+    vc2_v = nh.advertise<geometry_msgs::Point>("/data/vc2_vel",2);
+    vc2_w=nh.advertise<geometry_msgs::Point>("/data/vc2_omega",2);
+
+    vc2_vx = nh.advertise<geometry_msgs::Point>("/data/vc2_vx",2);
+    vc2_vy = nh.advertise<geometry_msgs::Point>("/data/vc2_vy",2);
+    trig = nh.advertise<geometry_msgs::Point>("/data/trigger",2);
+
 
     conn1_curve = new QCPCurve(ui->customplot4->xAxis ,ui->customplot4->yAxis );
     conn2_curve = new QCPCurve(ui->customplot4->xAxis ,ui->customplot4->yAxis );
@@ -44,10 +62,21 @@ MainWindow::MainWindow(QWidget *parent) :
     path_curve->data()->set(path_curve_data, true);
     path_curve->setName("Desired Trajectory \n (point c2)");
 
+    map_path_curve =new QCPCurve(ui->plot->xAxis,ui->plot->yAxis);
+    map_path_curve_data.clear();
+    map_path_curve->data()->set(map_path_curve_data, true);
+    map_path_curve->setName("Desired Trajectory \n (point c2)");
+
     desired_curve = new QCPCurve(ui->customplot4->xAxis, ui->customplot4->yAxis);
     desired_curve_data.clear();
     desired_curve->data()->set(desired_curve_data, true);
     desired_curve->setName("Actual Trajectory \n (point c2)");
+
+    map_desired_curve = new QCPCurve(ui->plot->xAxis, ui->plot->yAxis);
+    map_desired_curve_data.clear();
+    map_desired_curve->data()->set(map_desired_curve_data, true);
+    map_desired_curve->setName("Actual Trajectory \n (point c2)");
+
 
     QFont legend_font;
     legend_font.setFamily("System");
@@ -238,6 +267,12 @@ MainWindow::MainWindow(QWidget *parent) :
 //     ui->qcustomplot3->graph(1)->setVisible(false);
 //    ui->qcustomplot3->graph(1)->removeFromLegend();
 //    ui->qcustomplot4->graph(1)->removeFromLegend();
+     ui->plot->setInteractions(QCP::iSelectAxes | QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+     ui->plot->axisRect()->setupFullAxesBox(true);
+     ui->plot->xAxis->setTickLabels(false);
+     ui->plot->yAxis->setTickLabels(false);
+     ui->plot->xAxis->grid()->setVisible(false);
+     ui->plot->yAxis->grid()->setVisible(false);
 
 
 
@@ -426,18 +461,15 @@ MainWindow::MainWindow(QWidget *parent) :
     pen.setStyle(Qt::PenStyle::DashLine);
     pen.setWidth(4);
     path_curve->setPen(pen);
-
+    map_path_curve->setPen(pen);
     pen = tpen;
 
 
 
     pen.setColor(Qt::red);
     desired_curve->setPen(pen);
-
+    map_desired_curve->setPen(pen);
     pen.setColor(Qt::red);
-  //  ui->customplot3->graph(1)->setPen(pen);
-   // ui->customplot3->graph(0)->removeFromLegend();
-   // ui->customplot3->graph(1)->removeFromLegend();
 
     ui->customplot2->yAxis->setRange(-3,4);
     ui->customplot->yAxis->setRange(-5,5);
@@ -472,7 +504,9 @@ MainWindow::MainWindow(QWidget *parent) :
     timer->start(100);
 }
 void MainWindow::vel_est_b_cb(const geometry_msgs::Point::ConstPtr &msg){
-c2_vel_b = *msg;
+   c2_vel_b = *msg;
+
+
 }
 
 
@@ -491,6 +525,51 @@ void MainWindow::state_loop(){
 
 
 }
+
+void MainWindow::map_cb(const nav_msgs::OccupancyGrid::ConstPtr &msg){
+    map_grid_data = *msg;
+    int cur_x=0;
+    int cur_y=-1;
+
+    ui->plot->xAxis->setRange(0,map_grid_data.info.width);
+    ui->plot->yAxis->setRange(0,map_grid_data.info.height);
+
+    if(map_grid_data.data.size()>0){
+        std::cout << "size" <<map_grid_data.data.size()  <<std::endl;
+
+        for(unsigned int i=0;i< map_grid_data.data.size();i++){
+
+            //split 1-d data to 2-D
+            if( i% ( map_grid_data.info.width) ==0){
+                cur_y+=1;
+                cur_x=0;
+            }else{
+                cur_x+=1;
+            }
+            //the object is an obstacle if its value is not zero.
+            if(map_grid_data.data[i] != 0){
+               //plot all obstalces on the map.
+                QCPItemRect* section = new QCPItemRect(ui->plot);
+                section->topLeft->setType(QCPItemPosition::ptPlotCoords);
+                section->topLeft->setAxes(ui->plot->xAxis, ui->plot->yAxis);
+                section->bottomRight->setType(QCPItemPosition::ptPlotCoords);
+                section->bottomRight->setAxes(ui->plot->xAxis, ui->plot->yAxis);
+                section->topLeft->setCoords(cur_x*0.5-0.25 , cur_y*0.5+0.25);
+                section->bottomRight->setCoords(cur_x*0.5 +0.25,cur_y*0.5-0.25);
+                section->setBrush(QBrush(QColor(0,0,0,100)));
+                section->setPen(Qt::NoPen);
+
+            }
+        }
+
+    }
+
+}
+
+
+
+
+
 void MainWindow::force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
     QPen pen;
     pen.setColor(Qt::blue);
@@ -503,6 +582,10 @@ void MainWindow::force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
     data = rotation_matrix * adata;
     ui->qcustomplot3->graph(0)->addData(time , data(0));
     ui->qcustomplot4->graph(0)->addData(time ,data(1));
+
+    ffx_.x = data(0);
+    ffy_.x = data(1);
+
     ui->qcustomplot3->graph(0)->setPen(pen);
     ui->qcustomplot4->graph(0)->setPen(pen);
 }
@@ -517,9 +600,15 @@ void MainWindow::estimate_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     f_=rotation_matrix*f ;
 
 
+
     ui->qcustomplot3->graph(1)->addData(time , -1.0*f_(0));
     ui->qcustomplot4->graph(1)->addData(time , -1.0*f_(1));
 
+    ffx_.y = -1.0*f_(0);
+    ffy_.y = -1.0*f_(1);
+
+      ffx.publish(ffx_);
+      ffy.publish(ffy_);
      ui->qcustomplot3->graph(1)->setPen(pen);
      ui->qcustomplot4->graph(1)->setPen(pen);
 
@@ -537,6 +626,10 @@ void MainWindow::trigger_cb(const geometry_msgs::Point::ConstPtr& msg){
     ui->qcustomplot5->graph(0)->addData(time, msg->y);
     ui->qcustomplot5->graph(1)->addData(time, msg->x);
 
+    trig_.x=msg->x;
+    trig_.y=msg->y;
+    trig.publish(trig_);
+
 
 }
 void MainWindow::force1_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
@@ -550,6 +643,10 @@ void MainWindow::force1_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
     ui->qcustomplot->graph(0)->addData(time , -1.0*adata(0));
     ui->qcustomplot2->graph(0)->addData(time ,-1.0*adata(1));
 
+    flx_.x = -1.0*adata(0);
+    fly_.x = -1.0*adata(1);
+
+
      ui->qcustomplot->graph(0)->setPen(pen);
      ui->qcustomplot2->graph(0)->setPen(pen);
 
@@ -562,6 +659,11 @@ void MainWindow::desired_velocity_cb(const geometry_msgs::Point::ConstPtr &msg){
     pen.setWidth(5);
     ui->qcustomplot6->graph(0)->addData(time , msg->x);   // body linear x
     ui->qcustomplot7->graph(0)->addData(time ,msg->y);    // body angular y
+
+    vc2_v_.y=msg->x;
+    vc2_w_.y=msg->y;
+
+
     ui->qcustomplot6->graph(0)->setPen(pen);
     ui->qcustomplot7->graph(0)->setPen(pen);
 
@@ -574,6 +676,14 @@ void MainWindow::desired_force_cb(const geometry_msgs::Point::ConstPtr &msg){
 
     ui->qcustomplot->graph(1)->addData(time , msg->x);
     ui->qcustomplot2->graph(1)->addData(time ,msg->y);
+
+    flx_.y=msg->x;
+    fly_.y=msg->y;
+
+
+    flx.publish(flx_);
+    fly.publish(fly_);
+
     ui->qcustomplot->graph(1)->setPen(pen);
     ui->qcustomplot2->graph(1)->setPen(pen);
 
@@ -602,8 +712,18 @@ void MainWindow::desired_traj_cb(const  geometry_msgs::Point::ConstPtr& msg ){
     ui->customplot->graph(1)->addData(time , msg->x);
     ui->customplot2->graph(1)->addData(time ,  msg->y);
 
+
     ui->customplot->graph(2)->addData(time , msg->x - point.x );
     ui->customplot2->graph(2)->addData(time ,  msg->y - point.y);
+
+    px_.x = msg->x;
+    px_.y = point.x;
+
+    py_.x = msg->y;
+    py_.y = point.y;
+
+    px.publish(px_);
+    py.publish(py_);
 
     conn1_curve_data.push_back(QCPCurveData(count ,msg->x, msg->y ));
 
@@ -626,6 +746,7 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
             c2_ = rotation_matrix* c2;
             ui->qcustomplot8->graph(0)->addData(time, c2_(0)  );
             ui->qcustomplot9->graph(0)->addData(time, -c2_(1));
+
             QPen ppen;
             ppen.setColor(Qt::blue);
             ppen.setWidth(4);
@@ -646,6 +767,19 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
              ui->qcustomplot8->graph(1)->addData(time, linear_(0));
              ui->qcustomplot9->graph(1)->addData(time, -linear_(1));
 
+             vc2_vx_.x = c2_(0);  //estimate
+             vc2_vx_.y = linear_(0); //groundtruth
+
+             vc2_vy_.x = c2_(1);  //estimate
+             vc2_vy_.y = linear_(1); //groundtruth
+
+             vc2_vx.publish(vc2_vx_);
+             vc2_vy.publish(vc2_vy_);
+
+
+
+
+
              Eigen::Vector3d vc2_, vc2_b;
              vc2_ << link_state.twist[i].linear.x, link_state.twist[i].linear.y, 0;
 
@@ -656,8 +790,6 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
              ui->qcustomplot11->graph(0)->setPen(ppen);
              ui->qcustomplot10->graph(0)->addData(time, vc2_b(0));
              ui->qcustomplot11->graph(0)->addData(time, vc2_b(1));
-
-
 
         }
         if(link_state.name[i].compare("payload::payload_link2")==0){
@@ -728,6 +860,11 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
             ui->qcustomplot6->graph(1)->addData(time, c2_vel_b.x  );
             ui->qcustomplot7->graph(1)->addData(time, c2_vel_b.z );
 
+            vc2_v_.x =  c2_vel_b.x ;
+            vc2_w_.x =  c2_vel_b.z ;
+            vc2_v.publish(vc2_v_);
+            vc2_w.publish(vc2_w_);
+
              ui->qcustomplot6->graph(1)->setPen(ppen);
              ui->qcustomplot7->graph(1)->setPen(ppen);
 
@@ -736,8 +873,18 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
 //            point.z = link_state.pose[i].position.z;
 //            ui->customplot->graph(0)->addData(time,point.x);
 //            ui->customplot2->graph(0)->addData(time,point.y);
+
              desired_curve_data.push_back(QCPCurveData(count ,link_state.pose[i].position.x,  link_state.pose[i].position.y ));
              desired_curve->data()->set(desired_curve_data,true);
+
+
+
+
+             map_desired_curve_data.push_back(QCPCurveData(count ,link_state.pose[i].position.x,  link_state.pose[i].position.y ));
+             map_desired_curve->data()->set(map_desired_curve_data,true);
+
+
+
 
              payload_vel.x  = link_state.twist[i].linear.x;
              payload_vel.y  = link_state.twist[i].linear.y;
@@ -834,8 +981,8 @@ void MainWindow::model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
 
     path_curve_data.push_back(QCPCurveData(count , - desired_point.x ,   desired_point.y));
     path_curve->data()->set(path_curve_data,true);
-
-
+    map_path_curve_data.push_back(QCPCurveData(count, -desired_point.x, desired_point.y));
+    map_path_curve->data()->set(map_path_curve_data);
 
     count++;
 
@@ -853,25 +1000,17 @@ void MainWindow::model_cb(const gazebo_msgs::ModelStates::ConstPtr& msg){
     ui->qcustomplot7->replot();
     ui->qcustomplot8->replot();
     ui->qcustomplot9->replot();
-
+    ui->plot->replot();
     ui->qcustomplot10->replot();
     ui->qcustomplot11->replot();
-}
-void MainWindow::traj_cb(const  geometry_msgs::Point::ConstPtr& msg ){
-
-
-}
-
-
-void MainWindow::local_cb(const  geometry_msgs::Point::ConstPtr& msg  ){
-
+    ui->customplot->replot();
+    ui->customplot2->replot();
 }
 
 void MainWindow::point_cb(const geometry_msgs::Point::ConstPtr & msg){
 
 
-  ui->customplot->replot();
-  ui->customplot2->replot();
+
 }
 
 
@@ -925,6 +1064,7 @@ void MainWindow::on_pushButton_clicked()
   ui->qcustomplot9->savePng(filename+"13.png", 0, 0, 2,100, -1);
   ui->qcustomplot10->savePng(filename+"14.png", 0, 0, 2,100, -1);
   ui->qcustomplot11->savePng(filename+"15.png", 0, 0, 2,100, -1);
+  ui->plot->savePng(filename+"16.png", 0, 0, 2,100, -1);
 }
 
 void MainWindow::on_pushButton_2_clicked()

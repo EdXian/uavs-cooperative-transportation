@@ -18,7 +18,7 @@ void Path::clear() {
     pathfolloweruav.markers.clear();
     pathleaderuav_text.markers.clear();
     pathfolloweruav_text.markers.clear();
-
+    pathdots.markers.clear();
   addNode(node, 0);
   addVehicle(node, 1);
   publishPath();
@@ -59,12 +59,12 @@ void Path::updatePath(std::vector<Node3D> nodePath) {
 
   for (size_t i = 0; i < nodePath.size(); ++i) {
     addSegment(nodePath[i]);
+    plotdot(nodePath[i].getX() * Constants::cellSize ,nodePath[i].getY() * Constants::cellSize , i);
+
     k++;
     if((i%15== 0)|| i== (nodePath.size()-1)){
         addVehicle(nodePath[i], k);
         addNode(nodePath[i], k);
-
-
     }
     k++;
   }
@@ -143,6 +143,9 @@ void Path::addNode(const Node3D& node, int i) {
 //  pathNode.pose.position.x = node.getX() * Constants::cellSize- cos(yaw) *2.0/2;
 //  pathNode.pose.position.y = node.getY() * Constants::cellSize- sin(yaw) *2.0/2;
   //pathNode.pose.orientation =orientaiotn;
+
+
+
   pathNodes.markers.push_back(pathNode);
 }
 
@@ -179,7 +182,7 @@ void Path::addVehicle(const Node3D& node, int i) {
   pathVehicle.pose.orientation = tf::createQuaternionMsgFromYaw(node.getT());
   orientaiotn =  tf::createQuaternionMsgFromYaw(node.getT());
 
-  pathVehicles.markers.push_back(pathVehicle);
+  //pathVehicles.markers.push_back(pathVehicle);
 
   vehicle_text(pathVehicle.pose.position.x ,pathVehicle.pose.position.y , i);
 
@@ -250,9 +253,9 @@ void Path::leader_uav(double x, double y, int i){
      uav_text.scale.z = 0.1;
      uav_text.color.a = 1;
      uav_text.lifetime = ros::Duration();
-     uav_text.text = "follower";
-     uav_text.pose.position.x = x + cos(yaw) *1.7/2   ;
-     uav_text.pose.position.y = y + sin(yaw)*1.7/2;
+     uav_text.text = "Follower";
+     uav_text.pose.position.x = x + cos(yaw) *1.5/2   ;
+     uav_text.pose.position.y = y + sin(yaw)*1.5/2;
 
      pathleaderuav_text.markers.push_back(uav_text);
 
@@ -308,13 +311,36 @@ void Path::follower_uav(double x, double y, int i){
     uav_text.scale.z = 0.1;
     uav_text.color.a = 1;
     uav_text.lifetime = ros::Duration();
-    uav_text.text = "leader";
-    uav_text.pose.position.x = x - cos(yaw) *1.7/2   ;
-    uav_text.pose.position.y = y - sin(yaw)*1.7/2;
+    uav_text.text = "Leader";
+    uav_text.pose.position.x = x - cos(yaw) *1.5/2   ;
+    uav_text.pose.position.y = y - sin(yaw)*1.5/2;
 
     pathfolloweruav_text.markers.push_back(uav_text);
 
 
+
+}
+void Path::plotdot(double x, double y, int i){
+    visualization_msgs::Marker dot;
+    dot.header.frame_id = "path";
+    dot.header.stamp = ros::Time(0);
+    dot.id = i;
+    dot.type = visualization_msgs::Marker::SPHERE;
+    dot.scale.x = 0.1;
+    dot.scale.y = 0.1;
+    dot.scale.z = 0.1;
+    dot.color.a = 1;
+
+
+    dot.color.r = Constants::teal.red;
+    dot.color.g = Constants::teal.green;
+    dot.color.b = Constants::teal.blue;
+
+    dot.pose.position.x = x;
+    dot.pose.position.y = y;
+    dot.pose.position.z = 0.0;
+    dot.pose.orientation = orientaiotn;
+    pathdots.markers.push_back(dot);
 
 }
 
@@ -328,7 +354,7 @@ void Path::payload(double x, double y , int i){
     payload_marker.scale.x = Constants::length - 0.15;
     payload_marker.scale.y = Constants::width - 0.4;
     payload_marker.scale.z = 0.1;
-    payload_marker.color.a = 0.4;
+    payload_marker.color.a = 1.0;
 
 
     payload_marker.color.r = Constants::teal.red;

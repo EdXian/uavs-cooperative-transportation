@@ -47,7 +47,7 @@ class Path {
 
     publeaderuav_text = n.advertise<visualization_msgs::MarkerArray>("leader_uav_text",1);
     pubfolloweruav_text = n.advertise<visualization_msgs::MarkerArray>("follower_uav_text",1);
-
+    pubPathdot = n.advertise<visualization_msgs::MarkerArray>("path_dot",1);
     path.header.frame_id = "path";
   }
 
@@ -86,7 +86,7 @@ class Path {
   void vehicle_text(double x , double y, int i);
   void leader_uav(double x , double y, int i);
   void follower_uav(double x , double y , int i);
-
+  void plotdot(double x , double y , int i);
   // ______________
   // PUBLISH METHODS
 
@@ -95,7 +95,12 @@ class Path {
   /// Publishes the path
   void publishPath() { pubPath.publish(path); }
   /// Publishes the nodes of the path
-  void publishPathNodes() { pubPathNodes.publish(pathNodes); }
+  void publishPathNodes() {// pubPathNodes.publish(pathNodes);
+//                            pathNodes.markers.pop_back();
+                            //pathNodes.markers.erase(pathNodes.markers.begin());
+
+
+                          }
   /// Publishes the vehicle along the path
   void publishPathVehicles() {
                                 pubPathVehicles.publish(pathVehicles);
@@ -105,6 +110,10 @@ class Path {
                                 pubfolloweruav.publish(pathfolloweruav);
                                 publeaderuav_text.publish(pathleaderuav_text);
                                 pubfolloweruav_text.publish(pathfolloweruav_text);
+
+
+                                //pubPathdot.publish(pathdots);
+
                              }
 
 
@@ -126,7 +135,7 @@ class Path {
   ros::Publisher pubvehicletext;
   ros::Publisher publeaderuav_text;
   ros::Publisher pubfolloweruav_text;
-
+  ros::Publisher pubPathdot;
   ///
   /// \brief path
   ///
@@ -138,6 +147,7 @@ class Path {
   visualization_msgs::MarkerArray pathVehicles;
   visualization_msgs::MarkerArray pathVehicletexts;
   visualization_msgs::MarkerArray pathpayloads;
+  visualization_msgs::MarkerArray pathdots;
   visualization_msgs::MarkerArray pathleaderuav;
   visualization_msgs::MarkerArray pathfolloweruav;
 
