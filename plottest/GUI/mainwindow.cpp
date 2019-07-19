@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
     px=nh.advertise<geometry_msgs::Point>("/data/px",2);
     py=nh.advertise<geometry_msgs::Point>("/data/py",2);
 
+    vcb = nh.advertise<geometry_msgs::Point>("/data/vc",2);
+
     flx = nh.advertise<geometry_msgs::Point>("/data/flx",2);
     fly = nh.advertise<geometry_msgs::Point>("/data/fly",2);
 
@@ -744,7 +746,7 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
             Eigen::Vector3d c2_ , c2;
             c2<<c2_vel.x , c2_vel.y, 0;
             c2_ = rotation_matrix* c2;
-            ui->qcustomplot8->graph(0)->addData(time, c2_(0)  );
+            ui->qcustomplot8->graph(0)->addData(time,  c2_(0));
             ui->qcustomplot9->graph(0)->addData(time, -c2_(1));
 
             QPen ppen;
@@ -790,6 +792,9 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
              ui->qcustomplot11->graph(0)->setPen(ppen);
              ui->qcustomplot10->graph(0)->addData(time, vc2_b(0));
              ui->qcustomplot11->graph(0)->addData(time, vc2_b(1));
+             vc.x = vc2_b(0);
+             vc.y = vc2_b(1);
+             vcb.publish(vc);
 
         }
         if(link_state.name[i].compare("payload::payload_link2")==0){
@@ -868,7 +873,7 @@ void MainWindow::link_cb(const gazebo_msgs::LinkStates::ConstPtr &msg){
              ui->qcustomplot6->graph(1)->setPen(ppen);
              ui->qcustomplot7->graph(1)->setPen(ppen);
 
-            //            point.x = link_state.pose[i].position.x;
+//            point.x = link_state.pose[i].position.x;
 //            point.y = link_state.pose[i].position.y;
 //            point.z = link_state.pose[i].position.z;
 //            ui->customplot->graph(0)->addData(time,point.x);

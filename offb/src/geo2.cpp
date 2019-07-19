@@ -1,4 +1,4 @@
-#include <ros/ros.h>
+﻿#include <ros/ros.h>
 #include <geometric_controller.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -56,41 +56,41 @@ Eigen::Vector3d  p_c2_truth;
 Eigen::Matrix3d  payload_rotation_truth;
 Eigen::Vector3d  v_c2_y;
  double payload_yaw;
-//void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
+void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
 
-//    gazebo_msgs::LinkStates links = *msg;
-//    if(links.name.size()>0){
-//        for(unsigned int i=0; i<links.name.size(); i++){
-//            if (links.name[i].compare("payload::payload_rec_g_box") == 0 ) {
-//                Eigen::Vector3d vec;
-//                v_c2_truth << links.twist[i].linear.x, links.twist[i].linear.y, links.twist[i].linear.z;
-//                p_c2_truth <<links.pose[i].position.x, links.pose[i].position.y, links.pose[i].position.z;
-//                vec<<  0 ,links.twist[i].linear.y, 0;
+    gazebo_msgs::LinkStates links = *msg;
+    if(links.name.size()>0){
+        for(unsigned int i=0; i<links.name.size(); i++){
+            if (links.name[i].compare("payload::payload_rec_g_box") == 0 ) {
+                Eigen::Vector3d vec;
+                v_c2_truth << links.twist[i].linear.x, links.twist[i].linear.y, links.twist[i].linear.z;
+                p_c2_truth <<links.pose[i].position.x, links.pose[i].position.y, links.pose[i].position.z;
+                vec<<  0 ,links.twist[i].linear.y, 0;
 
-//                double w,x,y,z;
-//                x=links.pose[i].orientation.x;
-//                y=links.pose[i].orientation.y;
-//                z=links.pose[i].orientation.z;
-//                w=links.pose[i].orientation.w;
-//                tf::Quaternion q(x,y,z,w);
-//                double roll,pitch,yaw;
-//                tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+                double w,x,y,z;
+                x=links.pose[i].orientation.x;
+                y=links.pose[i].orientation.y;
+                z=links.pose[i].orientation.z;
+                w=links.pose[i].orientation.w;
+                tf::Quaternion q(x,y,z,w);
+                double roll,pitch,yaw;
+                tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
-//                //body to inertial frame
-//                payload_rotation_truth<< cos(yaw), -sin(yaw) , 0,
-//                                         sin(yaw),  cos(yaw),  0,
-//                                         0   ,   0       ,   1;
-//                v_c2_y = payload_rotation_truth * vec ;
-//                v_c2_b_truth =  payload_rotation_truth.transpose()* v_c2_truth;
-//                //std::cout << "yaw_error:  "  << payload_yaw    -yaw          << std::endl;
-//                data.z = payload_yaw    -yaw ;
+                //body to inertial frame
+                payload_rotation_truth<< cos(yaw), -sin(yaw) , 0,
+                                         sin(yaw),  cos(yaw),  0,
+                                         0   ,   0       ,   1;
+                v_c2_y = payload_rotation_truth * vec ;
+                v_c2_b_truth =  payload_rotation_truth.transpose()* v_c2_truth;
+                //std::cout << "yaw_error:  "  << payload_yaw    -yaw          << std::endl;
+                data.z = payload_yaw    -yaw ;
 
 
-//            }
-//        }
+            }
+        }
 
-//    }
-//}
+    }
+}
 
 Eigen::Vector3d pfc;
 Eigen::Vector3d f, fb ,vb;
@@ -262,7 +262,7 @@ int main(int argc, char **argv)
   ros::Publisher  trigger_pub = nh.advertise<geometry_msgs::Point>("/follower_trigger", 2);
   ros::Subscriber odom_sub = nh.subscribe<nav_msgs::Odometry>
            ("/firefly2/odometry_sensor1/odometry", 3, odom_cb);
-//  ros::Subscriber  model_sub = nh.subscribe<gazebo_msgs::LinkStates>("/gazebo/link_states",1,model_cb);
+  ros::Subscriber  model_sub = nh.subscribe<gazebo_msgs::LinkStates>("/gazebo/link_states",1,model_cb);
 
   ros::Publisher   traj_pub= nh.advertise<geometry_msgs::PoseStamped>("/firefly2/command/pose", 2);
   ros::Publisher   vc2_pub = nh.advertise<geometry_msgs::Point>("vc2_error",1);
@@ -322,26 +322,31 @@ int main(int argc, char **argv)
             v<<0.0,0.0,0.0;
 
 
-            fb = payload_Rotation * f;
-            vb = payload_Rotation * vel;
 
 
-            //   fb
-            //   v_c2_b_truth
+              fb = payload_rotation_truth * f;
+              vb = payload_rotation_truth * vel;
+              ab<< (0-v_c2_b_truth(0))/2.5+ fb(0)/6.5,
+                   (0-v_c2_b_truth(1))/7.0+ fb(1)/7.0,
+                    5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
 
+              a = payload_rotation_truth* ab;
 
-            ab << (0-vb(0))/2.0+ (fb(0))/5.5,
-                  (0-vb(1))/1.0+ (fb(1))/1.0,
-                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
-            a = payload_Rotation.transpose() *ab;
+            //protect
 
+//            fb = payload_Rotation * f;
+//            vb = payload_Rotation * vel;
 
+//            ab << (0-vb(0))/0.5+ (fb(0))/1.0,
+//                  (0-vb(1))/1.2+ (fb(1))/1.0,
+//                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
+//            a = payload_Rotation.transpose() *ab;
 
 //            ab << (0-vel(0))/1.0+ (f(0))/1.5,
 //                  (0-vel(1))/1.0+ (f(1))/1.5,
 //                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
 //            a =   ab;
-
+        //protect
 
             desired_pose.pose.position.x = pose(0);
             desired_pose.pose.position.y = pose(1);

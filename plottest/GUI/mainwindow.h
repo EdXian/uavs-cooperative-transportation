@@ -181,24 +181,26 @@ private:
     ros::Publisher vc2_w;   //(est des groundtruth)
     ros::Publisher trig;
 
+    ros::Publisher vcb;
+
 
     geometry_msgs::Point px_;
-     geometry_msgs::Point py_;
+    geometry_msgs::Point py_;
 
-     geometry_msgs::Point flx_;
+    geometry_msgs::Point flx_;
     geometry_msgs::Point fly_;
 
-     geometry_msgs::Point ffx_;
-     geometry_msgs::Point ffy_;
+    geometry_msgs::Point ffx_;
+    geometry_msgs::Point ffy_;
 
-     geometry_msgs::Point vc2_v_;  //(est des groundtruth)
-     geometry_msgs::Point vc2_w_;   //(est des groundtruth)
+    geometry_msgs::Point vc2_v_;  //(est des groundtruth)
+    geometry_msgs::Point vc2_w_;   //(est des groundtruth)
 
     geometry_msgs::Point vc2_vx_;
-     geometry_msgs::Point vc2_vy_;
-     geometry_msgs::Point trig_;
+    geometry_msgs::Point vc2_vy_;
+    geometry_msgs::Point trig_;
 
-
+    geometry_msgs::Point vc;
 
     ros::master::V_TopicInfo topic_list;
     bool getRosTopics(ros::master::V_TopicInfo& topics);
