@@ -18,7 +18,7 @@ sudo apt-get install ros-melodic-ompl
 sudo apt-get install ros-melodic-mavros
 sudo apt-get install ros-melodic-mavros-extras 
 sudo apt-get install ros-melodic-mavros-msgs
-
+sudo apt-get install libompl-dev
 cd /opt/ros/melodic/lib/mavros
 sudo ./install_geographiclib_datasets.sh
 
