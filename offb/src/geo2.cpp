@@ -82,9 +82,7 @@ void model_cb(const gazebo_msgs::LinkStates::ConstPtr& msg){
                                          0   ,   0       ,   1;
                 v_c2_y = payload_rotation_truth * vec ;
                 v_c2_b_truth =  payload_rotation_truth.transpose()* v_c2_truth;
-                //std::cout << "yaw_error:  "  << payload_yaw    -yaw          << std::endl;
                 data.z = payload_yaw    -yaw ;
-
 
             }
         }
@@ -111,6 +109,28 @@ Eigen::VectorXd poly_t(double t){
 
 double tmpx,tmpy;
 double last_tmp_x, last_tmp_y;
+double pre_vel_x;
+double pre_vel_y;
+//
+double an;
+double r;
+double fd;
+double mp=0.5;
+double b=1.0;
+double kd = 0.5;
+double command;
+double last_vec_x;
+double last_vec_y;
+double last_vx;
+double last_vy;
+
+
+
+
+double cur_time;
+
+
+
 void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
     est_force = *msg;
     f<< est_force.x, est_force.y, est_force.z;
@@ -152,8 +172,6 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
                poly_t(0.08).transpose(),
                poly_t(0.1).transpose(),
                 poly_t(0.12).transpose();
-//        std::cout << "---------------"<<std::endl;
-//        std::cout << w <<std::endl;
         double t1,t2,t3,t4,t5,t6,t7;
 
         t1 = pos_x_buffer.front();
@@ -193,27 +211,64 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
         ty<< t1, t2, t3, t4, t5,t6,t7;
         coeff_y = (w.transpose() * w).inverse() * w.transpose()* ty;
 
-        double t=0.14;
-
-
+        double t=0.14;   //t=0.14
         tmpx = coeff_x(0)*1 + coeff_x(1)*t + coeff_x(2)*t*t+
                coeff_x(3)*1*t*t*t + coeff_x(4)*t*t*t*t + coeff_x(5)*t*t*t*t*t;
         tmpy = coeff_y(0)*1 + coeff_y(1)*t + coeff_y(2)*t*t+
                coeff_y(3)*1*t*t*t + coeff_y(4)*t*t*t*t + coeff_y(5)*t*t*t*t*t;
 
-
-        tmpx = 0.7*last_tmp_x + 0.3*tmpx;
+        tmpx = 0.7*last_tmp_x + 0.3*tmpx;    // filter
         tmpy = 0.7*last_tmp_y + 0.3*tmpy;
+
+
+
+
+//        double vx = vec_x / 0.02;
+//        double vy = vec_y / 0.02;
+        double vx =v_c2_truth(0);
+        double vy = v_c2_truth(1);
+
+        double vec_x = v_c2_truth(0);
+        double vec_y = v_c2_truth(1);
+
+        double dt = cur_time - ros::Time::now().toSec();
+        cur_time = ros::Time::now().toSec();
+        double ax = (vx-last_vx)/dt;
+        double ay = (vy-last_vy)/dt;
+
+        double v = sqrt(vx*vx + vy*vy);
+
+        Eigen::Vector3d offset = (f/f.norm()) * 0.18;
+        Eigen::Vector3d offset_b = payload_Rotation * offset;
+
+        r =   (v*v*v)/fabs(vx *ay-vy*ax);
+        an = (v*v) / r;
+        fd = mp/2 *an;
+        std::cout << "radius : " << r << std::endl;
+        //(0-vb(0))/0.5+ (fb(0))/1.0,
+        //x = 0
+        double fy = fb(1);
+        double x = offset_b(1);
+        double xd = r;
+        //determine CCW or CW
+        if((last_vec_x * vec_y - last_vec_y * vec_x)<0){
+          fd = fd * -1.0;
+          xd = xd * -1.0;
+        }
+        kd=0.5*9.8/2*0.18;
+
+        command = 1.0*((0-vb(1))/0.5 - kd*(offset_b(1))+ 1.0*(fy-fd));
+         //ccw or cw
+
 
         data.x = tmpx;
         data.y = tmpy;
-
         last_tmp_x = tmpx ;
         last_tmp_y = tmpy ;
-//        std::cout <<"============="<<std::endl;
-//        std::cout << data.x<<std::endl;
-//        std::cout << data.y<<std::endl;
-
+        last_vec_x = vec_x;
+        last_vec_y = vec_y;
+        last_vx = vx;
+        last_vy = vy;
     }else if (count_%1==0){
 
         pos_x_buffer.push(p_c2(0));
@@ -322,17 +377,15 @@ int main(int argc, char **argv)
             v<<0.0,0.0,0.0;
 
 
+            fb = payload_Rotation * f;
+            vb = payload_Rotation * vel;
 
+            ab << (0-vb(0))/0.5+ (fb(0))/1.0,
+                  command,
+                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
+            a = payload_Rotation.transpose() *ab;
+          //protect
 
-              fb = payload_rotation_truth * f;
-              vb = payload_rotation_truth * vel;
-              ab<< (0-v_c2_b_truth(0))/2.5+ fb(0)/6.5,
-                   (0-v_c2_b_truth(1))/7.0+ fb(1)/7.0,
-                    5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
-
-              a = payload_rotation_truth* ab;
-
-            //protect
 
 //            fb = payload_Rotation * f;
 //            vb = payload_Rotation * vel;
@@ -341,12 +394,7 @@ int main(int argc, char **argv)
 //                  (0-vb(1))/1.2+ (fb(1))/1.0,
 //                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
 //            a = payload_Rotation.transpose() *ab;
-
-//            ab << (0-vel(0))/1.0+ (f(0))/1.5,
-//                  (0-vel(1))/1.0+ (f(1))/1.5,
-//                  5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
-//            a =   ab;
-        //protect
+            //protect
 
             desired_pose.pose.position.x = pose(0);
             desired_pose.pose.position.y = pose(1);

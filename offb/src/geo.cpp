@@ -1,11 +1,7 @@
 ﻿#include <ros/ros.h>
 #include <geometric_controller.h>
-#include <mavros_msgs/AttitudeTarget.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
-#include <mavros_msgs/CommandBool.h>
-#include <mavros_msgs/SetMode.h>
-#include <mavros_msgs/State.h>
 #include <gazebo_msgs/ModelStates.h>
 #include <gazebo_msgs/LinkStates.h>
 #include <tf/transform_datatypes.h>
