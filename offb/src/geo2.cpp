@@ -1,4 +1,4 @@
-﻿#include <ros/ros.h>
+#include <ros/ros.h>
 #include <geometric_controller.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
@@ -30,7 +30,7 @@ geometry_msgs::PoseStamped desired_pose;
 geometry_msgs::TwistStamped follower_vel;
 Eigen::Vector3d pose,vel,ang   ;
 Eigen::Vector4d ori ;
-
+geometry_msgs::Point kappa;
 
 unsigned int tick=0;
 bool flag = false;
@@ -171,7 +171,7 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
                poly_t(0.06).transpose(),
                poly_t(0.08).transpose(),
                poly_t(0.1).transpose(),
-                poly_t(0.12).transpose();
+               poly_t(0.12).transpose();
         double t1,t2,t3,t4,t5,t6,t7;
 
         t1 = pos_x_buffer.front();
@@ -220,47 +220,54 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
         tmpx = 0.7*last_tmp_x + 0.3*tmpx;    // filter
         tmpy = 0.7*last_tmp_y + 0.3*tmpy;
 
-
-
-
-//        double vx = vec_x / 0.02;
-//        double vy = vec_y / 0.02;
-        double vx =v_c2_truth(0);
-        double vy = v_c2_truth(1);
-
-        double vec_x = v_c2_truth(0);
-        double vec_y = v_c2_truth(1);
-
         double dt = cur_time - ros::Time::now().toSec();
         cur_time = ros::Time::now().toSec();
+
+        double vec_x = tmpx - last_tmp_x ;
+        double vec_y = tmpy - last_tmp_y ;
+
+        double vx = vec_x /dt;
+        double vy = vec_y /dt;
+//        double vx =v_c2_truth(0);
+//        double vy = v_c2_truth(1);
+//        double vec_x = v_c2_truth(0);
+//        double vec_y = v_c2_truth(1);
+
+
+
         double ax = (vx-last_vx)/dt;
         double ay = (vy-last_vy)/dt;
 
         double v = sqrt(vx*vx + vy*vy);
 
-        Eigen::Vector3d offset = (f/f.norm()) * 0.18;
-        Eigen::Vector3d offset_b = payload_Rotation * offset;
+
+//        Eigen::Vector3d offset =
+
+        Eigen::Vector3d offset_b = payload_Rotation *(f/f.norm()) * 0.18;
 
         r =   (v*v*v)/fabs(vx *ay-vy*ax);
         an = (v*v) / r;
         fd = mp/2 *an;
-        std::cout << "radius : " << r << std::endl;
+
+        //std::cout << "radius : " << r << std::endl;
         //(0-vb(0))/0.5+ (fb(0))/1.0,
         //x = 0
         double fy = fb(1);
-        double x = offset_b(1);
+        double dx = offset_b(1);
         double xd = r;
-        //determine CCW or CW
+//        std::cout << "dx " <<dx << std::endl;
         if((last_vec_x * vec_y - last_vec_y * vec_x)<0){
+          //determine wheather the motion is CCW or CW, if CW fd and xd is negative.
           fd = fd * -1.0;
-          xd = xd * -1.0;
+          dx = dx * -1.0;
         }
-        kd=0.5*9.8/2*0.18;
+        kappa.x = r;
+        kappa.y = fd;
+        kappa.z = dx;
 
-        command = 1.0*((0-vb(1))/0.5 - kd*(offset_b(1))+ 1.0*(fy-fd));
-         //ccw or cw
-
-
+        kd=1.0*0.5*9.8/2*0.18;
+//        kd = 0.0;
+        command = 1.0*(2.0*(0-vb(1)) - kd*(dx)+ 1.0*(fy-fd));
         data.x = tmpx;
         data.y = tmpy;
         last_tmp_x = tmpx ;
@@ -314,15 +321,16 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>("/follower_ukf/force_estimate", 3, est_force_cb);
-  ros::Publisher  trigger_pub = nh.advertise<geometry_msgs::Point>("/follower_trigger", 2);
+
   ros::Subscriber odom_sub = nh.subscribe<nav_msgs::Odometry>
            ("/firefly2/odometry_sensor1/odometry", 3, odom_cb);
   ros::Subscriber  model_sub = nh.subscribe<gazebo_msgs::LinkStates>("/gazebo/link_states",1,model_cb);
 
   ros::Publisher   traj_pub= nh.advertise<geometry_msgs::PoseStamped>("/firefly2/command/pose", 2);
   ros::Publisher   vc2_pub = nh.advertise<geometry_msgs::Point>("vc2_error",1);
-
-   nh.setParam("/start2",false);
+  ros::Publisher  trigger_pub = nh.advertise<geometry_msgs::Point>("/follower_trigger", 2);
+  ros::Publisher   radius_pub =nh.advertise<geometry_msgs::Point>("/kappa",2);
+  nh.setParam("/start2",false);
    nh.setParam("/force_control",false);
 
    triggered  = false;
@@ -380,7 +388,7 @@ int main(int argc, char **argv)
             fb = payload_Rotation * f;
             vb = payload_Rotation * vel;
 
-            ab << (0-vb(0))/0.5+ (fb(0))/1.0,
+            ab << (0-vb(0))/1.5+ (fb(0))/3.0,
                   command,
                   5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
             a = payload_Rotation.transpose() *ab;
@@ -402,7 +410,6 @@ int main(int argc, char **argv)
             force.pose.position.x = a(0);           //a(0) ;
             force.pose.position.y = a(1);
             force.pose.position.z = a(2) ;
-
 
             trigger.x = 1;
 
@@ -426,6 +433,8 @@ int main(int argc, char **argv)
 
 
 
+
+          radius_pub.publish(kappa);
            vc2_pub.publish(data);
 
 

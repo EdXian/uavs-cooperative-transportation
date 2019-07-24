@@ -371,8 +371,9 @@ int main(int argc, char **argv)
        Eigen::Vector3d   nonlinearterm;
        r_c2_p  << 0.5 , 0,0;
 
+       nonlinearterm =omega_m.cross(omega_m.cross(r_c2_p));
 
-       nonlinearterm = R_c2_B*(omega_m.cross(v_p))- alpha.cross(r_c2_p)-omega_m.cross(omega_m.cross(r_c2_p));
+//       nonlinearterm = R_c2_B*(omega_m.cross(v_p))- alpha.cross(r_c2_p)-omega_m.cross(omega_m.cross(r_c2_p));
        Eigen::Vector3d nonholoutput = nonholonomic_output(vir_x,vir_y,theta_r,vr,omega_r);
 
        //  R_-1 * omega x v - omega_dot x rcp - omega x (omega x r)
@@ -393,30 +394,26 @@ int main(int argc, char **argv)
        // std::cout << "ok"<<std::endl;
 
         double L = 1.0;
-        double I_p = (0.0833)*0.5*1.0*1.0;
+        double  I_p= (0.0833)*1.0*1.0;
 
-        tmp <<  3.0 * (nonholoutput(0) - vc2_est(0))+ err_state_B(0) + nonlinearterm(0) + vd_dot ,
-             3.0 * (nonholoutput(1)-vc2_est(2)) + sin(theta_e)/1.0 +omegad_dot  ,   //ffy is close to zero.
+        tmp <<  5 * (nonholoutput(0) - vc2_est(0)) + err_state_B(0) + nonlinearterm(0) + vd_dot ,
+                11.0 * (nonholoutput(1)-vc2_est(2))   + 5.5*sin(theta_e)/1.0  +omegad_dot,   //ffy is close to zero.
                                                   0;
+        Eigen::Matrix3d M;   //2*(1/12)*0.5*1.0*1.0 =
 
-        feedforward.x =nonlinearterm(0);
-        feedforward.y = vd_dot;
-        feedforward.z = omegad_dot;
+        M<<     mp, 0, 0,
+                0 ,  I_p, 0,   // 0.666*3.0=2.0      0.666*1.0=0.666
+                0 , 0, 1;
 
-        cmd_ = R_c2_B.transpose() *  tmp;
+        cmd_ =  R_c2_B.transpose() * M * tmp;
 
         tick++;
         //
-        vp_dot_des(0) =  cmd_(0);// + nonlinearterm(0);// + vd_dot ;
-        vp_dot_des(1) =  cmd_(1);// + omegad_dot;
+        vp_dot_des(0) =  cmd_(0);   // + nonlinearterm(0);// + vd_dot ;
+        vp_dot_des(1) =  cmd_(1);   // + omegad_dot;
         vp_dot_des(2) = 1.0*(1.3 - pose(2))+0.6*(0-vel(2));
 
-        Eigen::Matrix3d M;
-        M<<     mp,0,0,
-                0,0.666,0,
-                0,0,1;
-        T_L = -T_F + M * vp_dot_des ;
-
+        T_L = -T_F + vp_dot_des ;
         desired_force.x = T_L(0);
         desired_force.y = T_L(1);
         desired_force.z = T_L(2);
@@ -425,6 +422,9 @@ int main(int argc, char **argv)
         desired_velocity.x = vr;
         desired_velocity.y = omega_r;
 
+        feedforward.x =nonlinearterm(0);
+        feedforward.y = vd_dot;
+        feedforward.z = omegad_dot;
 
 
         force.pose.position.x = T_L(0);
