@@ -132,8 +132,9 @@ int main(int argc, char **argv)
   int count = 1;
   Eigen::MatrixXd mnoise;
   mnoise.setZero(measurementsize,measurementsize);
+  
+  
   mnoise   = 3e-3*Eigen::MatrixXd::Identity(measurementsize , measurementsize);
-
   mnoise(mp_x,mp_x) = 1e-4;
   mnoise(mp_y,mp_y) = 1e-4;
   mnoise(mp_z,mp_z) = 1e-4;

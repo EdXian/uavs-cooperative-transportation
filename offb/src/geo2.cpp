@@ -228,6 +228,8 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
 
         double vx = vec_x /dt;
         double vy = vec_y /dt;
+
+
 //        double vx =v_c2_truth(0);
 //        double vy = v_c2_truth(1);
 //        double vec_x = v_c2_truth(0);
@@ -267,6 +269,7 @@ void  est_force_cb(const geometry_msgs::Point::ConstPtr& msg){
 
         kd=1.0*0.5*9.8/2*0.18;
 //        kd = 0.0;
+        //dx = l2_tan(theta)
         command = 1.0*(2.0*(0-vb(1)) - kd*(dx)+ 1.0*(fy-fd));
         data.x = tmpx;
         data.y = tmpy;
@@ -313,6 +316,22 @@ void odom_cb(const nav_msgs::Odometry::ConstPtr& msg){
 geometry_msgs::Point trigger;
 bool triggered;
 trajectory_msgs::MultiDOFJointTrajectory cmd;
+geometry_msgs::Point force2;
+Eigen::Vector3d a_,b_;
+
+void force2_cb(const geometry_msgs::WrenchStamped::ConstPtr& msg){
+
+
+force2.x = msg->wrench.force.x;
+force2.y = msg->wrench.force.y;
+force2.z = msg->wrench.force.z;
+  b_<<force2.x  , force2.y,force2.x;
+a_ = payload_rotation_truth * b_;
+
+force2.x = a_(0);
+force2.y = a_(1);
+force2.z = a_(2);
+}
 int main(int argc, char **argv)
 {
 
@@ -321,7 +340,7 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   ros::Subscriber est_force_sub = nh.subscribe<geometry_msgs::Point>("/follower_ukf/force_estimate", 3, est_force_cb);
-
+   ros::Subscriber force2_sub= nh.subscribe<geometry_msgs::WrenchStamped>("/ft_sensor2_topic",2,force2_cb);
   ros::Subscriber odom_sub = nh.subscribe<nav_msgs::Odometry>
            ("/firefly2/odometry_sensor1/odometry", 3, odom_cb);
   ros::Subscriber  model_sub = nh.subscribe<gazebo_msgs::LinkStates>("/gazebo/link_states",1,model_cb);
@@ -330,6 +349,8 @@ int main(int argc, char **argv)
   ros::Publisher   vc2_pub = nh.advertise<geometry_msgs::Point>("vc2_error",1);
   ros::Publisher  trigger_pub = nh.advertise<geometry_msgs::Point>("/follower_trigger", 2);
   ros::Publisher   radius_pub =nh.advertise<geometry_msgs::Point>("/kappa",2);
+  ros::Publisher   force2_pub =nh.advertise<geometry_msgs::Point>("/force2",2);
+
   nh.setParam("/start2",false);
    nh.setParam("/force_control",false);
 
@@ -388,7 +409,7 @@ int main(int argc, char **argv)
             fb = payload_Rotation * f;
             vb = payload_Rotation * vel;
 
-            ab << (0-vb(0))/1.5+ (fb(0))/3.0,
+            ab << (0-vb(0))+ (fb(0))/3.0,
                   command,
                   5.0*(desired_pose.pose.position.z - pose(2)) + 2.0*(0-vel(2)) + 0.5 * 0.5 * 9.8 ;
             a = payload_Rotation.transpose() *ab;
@@ -432,7 +453,7 @@ int main(int argc, char **argv)
            trigger_pub.publish(trigger);
 
 
-
+          force2_pub.publish(force2);
 
           radius_pub.publish(kappa);
            vc2_pub.publish(data);
